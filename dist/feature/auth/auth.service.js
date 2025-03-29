@@ -23,190 +23,92 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
+const base_response_1 = require("../../utils/base-response");
 const typeorm_1 = require("@nestjs/typeorm");
-const user_entity_1 = require("../../entities/user.entity");
 const typeorm_2 = require("typeorm");
-const otp_verification_entity_1 = require("../../entities/otp_verification.entity");
-const jwt_1 = require("@nestjs/jwt");
+const otp_verification_entity_1 = require("./entities/otp_verification.entity");
+const user_entity_1 = require("./entities/user.entity");
+const engagement_identifiers_entity_1 = require("../engagement-identifier/entities/engagement_identifiers.entity");
 let AuthService = class AuthService {
-    constructor(userRepo, otpRepo, jwtService) {
+    constructor(userRepo, otpRepo, engagementRepo) {
         this.userRepo = userRepo;
         this.otpRepo = otpRepo;
-        this.jwtService = jwtService;
+        this.engagementRepo = engagementRepo;
     }
-    registerRequest(registerDto) {
+    requestOtp(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            let { country_code, phone_number } = registerDto;
-            // 1. Validate input: Only digits allowed
-            const digitOnly = /^\d+$/;
-            // Strip '+' if exists (e.g. +60 → 60)
-            country_code = country_code.replace('+', '');
-            if (!digitOnly.test(country_code)) {
-                throw new common_1.BadRequestException('country_code must contain digits only (no special characters)');
+            // Validate input
+            if (!dto.countryCode || !dto.phoneNumber) {
+                throw new Error('Country code and phone number cannot be null or empty');
             }
-            if (!digitOnly.test(phone_number)) {
-                throw new common_1.BadRequestException('phone_number must contain digits only');
-            }
-            // 2. Check if user already exists
-            const existingUser = yield this.userRepo.findOne({ where: { phone_number } });
-            if (existingUser) {
-                throw new common_1.BadRequestException('User already exists');
-            }
-            // 3. Generate OTP
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
-            // 4. Save OTP entry
-            yield this.otpRepo.save({
-                phone_number,
-                country_code, // sanitized version
-                otp,
-                expires_at: expiresAt,
-                isVerified: false,
-            });
-            console.log(`Register OTP for +${country_code}${phone_number}: ${otp}`);
-            return {
-                message: 'OTP sent successfully',
-                otp: otp, // remove in prod
-            };
-        });
-    }
-    registerVerify(dto) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let { country_code, phone_number, otp } = dto;
-            country_code = country_code.replace('+', '');
-            const digitOnly = /^\d+$/;
-            if (!digitOnly.test(country_code)) {
-                throw new common_1.BadRequestException('country_code must be digits only');
-            }
-            if (!digitOnly.test(phone_number)) {
-                throw new common_1.BadRequestException('phone_number must be digits only');
-            }
-            const otpEntry = yield this.otpRepo.findOne({
-                where: {
-                    country_code,
-                    phone_number,
-                    otp,
-                    isVerified: false,
-                    expires_at: (0, typeorm_2.MoreThan)(new Date()),
-                },
-            });
-            if (!otpEntry)
-                throw new common_1.BadRequestException('Invalid or expired OTP');
-            //Check if user already exists
+            // Remove leading '+' from countryCode, if present
+            const sanitizedCountryCode = dto.countryCode.replace(/^\+/, '');
+            // Concatenate country code and phone number to create customerId
+            const customerId = `${sanitizedCountryCode}${dto.phoneNumber}`;
+            // Check if user exists
             const existingUser = yield this.userRepo.findOne({
-                where: { country_code, phone_number },
+                where: { customer_id: customerId },
             });
-            if (existingUser)
-                throw new common_1.BadRequestException('User already exists');
-            //Get latest customer_id
-            const latestUser = yield this.userRepo
-                .createQueryBuilder('user')
-                .where('user.customer_id IS NOT NULL')
-                .orderBy('user.customer_id', 'DESC')
-                .getOne();
-            const lastCustomerId = (latestUser === null || latestUser === void 0 ? void 0 : latestUser.customer_id)
-                ? parseInt(latestUser.customer_id)
-                : 1000000;
-            const newCustomerId = (lastCustomerId + 1).toString();
-            //Create new user
-            const newUser = this.userRepo.create({
-                country_code,
-                phone_number,
-                isVerified: true,
-                customer_id: newCustomerId,
-            });
-            const user = yield this.userRepo.save(newUser);
-            //Mark OTP as used
-            otpEntry.isVerified = true;
-            yield this.otpRepo.save(otpEntry);
-            //Generate JWT
-            const payload = { sub: user.customer_id, phone: user.phone_number };
-            const token = this.jwtService.sign(payload);
-            return {
-                message: 'Phone number verified and user created successfully',
-                token,
-                customer_id: newCustomerId,
-                country_code: user.country_code,
-                phone_number: user.phone_number,
-            };
-        });
-    }
-    updateProfile(dto) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { customer_id, name, profile_image } = dto;
-            const user = yield this.userRepo.findOne({ where: { customer_id: customer_id } });
-            if (!user)
-                throw new common_1.NotFoundException('User not found');
-            if (!user.isVerified)
-                throw new common_1.BadRequestException('User is not verified');
-            user.name = name;
-            user.profile_image = profile_image || user.profile_image;
-            yield this.userRepo.save(user);
-            return { message: 'Profile updated successfully' };
-        });
-    }
-    loginRequest(dto) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let { country_code, phone_number } = dto;
-            // Sanitize
-            country_code = country_code.replace('+', '');
-            const digitOnly = /^\d+$/;
-            if (!digitOnly.test(country_code) || !digitOnly.test(phone_number)) {
-                throw new common_1.BadRequestException('Invalid country code or phone number');
-            }
-            // Find existing user
-            const user = yield this.userRepo.findOne({ where: { country_code, phone_number } });
-            if (!user || !user.isVerified) {
-                throw new common_1.BadRequestException('User not found or not verified');
-            }
-            // Generate OTP
+            // Generate a 6-digit OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-            // Save OTP
-            yield this.otpRepo.save({
-                phone_number,
-                country_code,
+            // Create OTP verification record
+            const otpRecord = this.otpRepo.create({
+                country_code: sanitizedCountryCode,
+                phone_number: dto.phoneNumber,
                 otp,
-                expires_at: expiresAt,
-                is_verified: false,
+                expires_at: new Date(Date.now() + 5 * 60 * 1000), // Expires in 5 minutes
             });
-            console.log(`Login OTP for +${country_code}${phone_number}: ${otp}`);
-            return {
-                message: 'OTP sent successfully for login',
-                otp, // remove in prod
-            };
+            // Save OTP verification record
+            yield this.otpRepo.save(otpRecord);
+            // Return response
+            return base_response_1.BaseResponse.success({
+                is_user: !!existingUser,
+                otp,
+            }, 'OTP sent successfully');
         });
     }
-    loginVerify(dto) {
+    verifyOtp(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            let { country_code, phone_number, otp } = dto;
-            country_code = country_code.replace('+', '');
-            const otpEntry = yield this.otpRepo.findOne({
+            const customerId = `${dto.countryCode}${dto.phoneNumber}`;
+            const otpRecord = yield this.otpRepo.findOne({
                 where: {
-                    country_code,
-                    phone_number,
-                    otp,
-                    isVerified: false,
-                    expires_at: (0, typeorm_2.MoreThan)(new Date()),
+                    country_code: dto.countryCode,
+                    phone_number: dto.phoneNumber,
+                    otp: dto.otp,
                 },
             });
-            if (!otpEntry)
-                throw new common_1.BadRequestException('Invalid or expired OTP');
-            const user = yield this.userRepo.findOne({ where: { country_code, phone_number } });
-            if (!user || !user.isVerified)
-                throw new common_1.NotFoundException('User not found or not verified');
-            otpEntry.isVerified = true;
-            yield this.otpRepo.save(otpEntry);
-            // JWT
-            const payload = { sub: user.customer_id, phone: user.phone_number };
-            const token = this.jwtService.sign(payload);
-            return {
-                message: 'Login successful',
-                token,
+            if (!otpRecord) {
+                return base_response_1.BaseResponse.error('Invalid OTP', 400);
+            }
+            let user = yield this.userRepo.findOne({
+                where: {
+                    phone_number: dto.phoneNumber,
+                    country_code: dto.countryCode,
+                },
+            });
+            if (!user) {
+                const nextCustomerId = yield this.generateNextCustomerId();
+                user = this.userRepo.create({
+                    customer_id: nextCustomerId,
+                    phone_number: dto.phoneNumber,
+                    country_code: dto.countryCode,
+                });
+                yield this.userRepo.save(user);
+            }
+            yield this.engagementRepo.update({ customer_id: customerId }, { isRegistered: true });
+            return base_response_1.BaseResponse.success({
+                phone_number: `${dto.countryCode}${dto.phoneNumber}`,
                 customer_id: user.customer_id,
-                country_code: user.country_code,
-                phone_number: user.phone_number,
-            };
+            }, 'OTP verified successfully');
+        });
+    }
+    generateNextCustomerId() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const lastUser = yield this.userRepo.findOne({
+                where: {},
+                order: { customer_id: 'DESC' },
+            });
+            return lastUser ? (parseInt(lastUser.customer_id) + 1).toString() : '100000';
         });
     }
 };
@@ -215,7 +117,8 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(otp_verification_entity_1.OtpVerification)),
+    __param(2, (0, typeorm_1.InjectRepository)(engagement_identifiers_entity_1.EngagementIdentifier)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
-        jwt_1.JwtService])
+        typeorm_2.Repository])
 ], AuthService);

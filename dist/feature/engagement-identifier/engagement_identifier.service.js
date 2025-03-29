@@ -21,39 +21,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatService = void 0;
+exports.EngagementIdentifierService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const chat_list_entity_1 = require("./entities/chat_list.entity");
-const chat_participant_entity_1 = require("./entities/chat_participant.entity");
-const message_entity_1 = require("./entities/message.entity");
-const user_entity_1 = require("../auth/entities/user.entity");
-let ChatService = class ChatService {
-    constructor(chatListRepo, chatParticipantRepo, messageRepo, userRepo) {
-        this.chatListRepo = chatListRepo;
-        this.chatParticipantRepo = chatParticipantRepo;
-        this.messageRepo = messageRepo;
-        this.userRepo = userRepo;
+const engagement_identifiers_entity_1 = require("./entities/engagement_identifiers.entity");
+let EngagementIdentifierService = class EngagementIdentifierService {
+    constructor(engagementRepo) {
+        this.engagementRepo = engagementRepo;
     }
-    getChatListForUser(userCustomerId) {
+    create(createDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.chatParticipantRepo.find({
-                where: { user: { customer_id: userCustomerId } },
-                relations: ['chat', 'chat.messages', 'chat.participants'],
-            });
+            const engagement = this.engagementRepo.create(createDto);
+            return yield this.engagementRepo.save(engagement);
+        });
+    }
+    findAll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.engagementRepo.find();
+        });
+    }
+    findOne(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.engagementRepo.findOne({ where: { id } });
+        });
+    }
+    update(id, updateDto) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.engagementRepo.update(id, updateDto);
+            return this.findOne(id);
+        });
+    }
+    remove(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.engagementRepo.delete(id);
         });
     }
 };
-exports.ChatService = ChatService;
-exports.ChatService = ChatService = __decorate([
+exports.EngagementIdentifierService = EngagementIdentifierService;
+exports.EngagementIdentifierService = EngagementIdentifierService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatList)),
-    __param(1, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipant)),
-    __param(2, (0, typeorm_1.InjectRepository)(message_entity_1.Message)),
-    __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository])
-], ChatService);
+    __param(0, (0, typeorm_1.InjectRepository)(engagement_identifiers_entity_1.EngagementIdentifier)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
+], EngagementIdentifierService);

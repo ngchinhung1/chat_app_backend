@@ -8,7 +8,7 @@ import {
     JoinColumn,
 } from 'typeorm';
 import {ChatList} from "./chat_list.entity";
-import {User} from "./user.entity";
+import {User} from "../../auth/entities/user.entity";
 
 @Entity('messages')
 export class Message {

@@ -1,4 +1,5 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
+import {EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 @Entity('users')
 export class User {
@@ -17,7 +18,10 @@ export class User {
     @Column({nullable: true, type: 'text'})
     profile_image?: string;
 
-    @Column({ name: 'is_verified', default: false })
+    @OneToMany(() => EngagementIdentifier, (engagement) => engagement.user)
+    engagementIdentifiers?: EngagementIdentifier[];
+
+    @Column({name: 'is_verified', default: false})
     isVerified!: boolean;
 
     @Column({default: false})
@@ -26,7 +30,7 @@ export class User {
     @Column({default: false})
     is_deleted!: boolean;
 
-    @Column({ nullable: true, unique: true })
+    @Column({unique: true})
     customer_id?: string;
 
     @Column({nullable: true})
@@ -35,7 +39,7 @@ export class User {
     @Column({nullable: true})
     deleted_at!: Date;
 
-    @Column({ name: 'created_at' })
+    @Column({name: 'created_at'})
     @CreateDateColumn()
     createdAt!: Date;
 

@@ -10,18 +10,19 @@ exports.AuthModule = void 0;
 const jwt_1 = require("@nestjs/jwt");
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const user_entity_1 = require("../../entities/user.entity");
-const auth_controller_1 = require("../../routes/auth.controller");
+const user_entity_1 = require("./entities/user.entity");
+const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
-const otp_verification_entity_1 = require("../../entities/otp_verification.entity");
+const otp_verification_entity_1 = require("./entities/otp_verification.entity");
 const jwt_strategy_1 = require("../../config/jwt.strategy");
+const engagement_identifiers_entity_1 = require("../engagement-identifier/entities/engagement_identifiers.entity");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, otp_verification_entity_1.OtpVerification]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, otp_verification_entity_1.OtpVerification, engagement_identifiers_entity_1.EngagementIdentifier]),
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' },

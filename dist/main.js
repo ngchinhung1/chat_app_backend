@@ -16,7 +16,7 @@ function bootstrap() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = yield core_1.NestFactory.create(app_module_1.AppModule);
         app.useGlobalPipes(new common_1.ValidationPipe());
-        yield app.listen(3000);
+        yield app.listen(3000, '0.0.0.0');
         console.log('Server running on http://localhost:3000');
     });
 }
