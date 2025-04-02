@@ -26,7 +26,7 @@ const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const common_1 = require("@nestjs/common");
 const chat_service_1 = require("./chat.service");
-const jwtAuthGuard_1 = require("../../config/guards/jwtAuthGuard");
+const jwtWsAuth_guard_1 = require("../../config/guards/jwtWsAuth.guard");
 let ChatGateway = class ChatGateway {
     constructor(chatService) {
         this.chatService = chatService;
@@ -67,6 +67,6 @@ exports.ChatGateway = ChatGateway = __decorate([
             origin: '*',
         },
     }),
-    (0, common_1.UseGuards)(jwtAuthGuard_1.WsJwtGuard),
+    (0, common_1.UseGuards)(jwtWsAuth_guard_1.JwtWsAuthGuard),
     __metadata("design:paramtypes", [chat_service_1.ChatService])
 ], ChatGateway);

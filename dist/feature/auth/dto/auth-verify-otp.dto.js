@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthVerifyOtpDto = void 0;
 const class_validator_1 = require("class-validator");
+const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 class AuthVerifyOtpDto {
 }
 exports.AuthVerifyOtpDto = AuthVerifyOtpDto;
@@ -30,7 +31,32 @@ __decorate([
     __metadata("design:type", String)
 ], AuthVerifyOtpDto.prototype, "otp", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(engagement_identifiers_entity_1.DevicePlatform),
+    __metadata("design:type", String)
+], AuthVerifyOtpDto.prototype, "devicePlatform", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthVerifyOtpDto.prototype, "deviceId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthVerifyOtpDto.prototype, "deviceModel", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthVerifyOtpDto.prototype, "language", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthVerifyOtpDto.prototype, "appVersion", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
-], AuthVerifyOtpDto.prototype, "isUser", void 0);
+], AuthVerifyOtpDto.prototype, "isGooglePlay", void 0);

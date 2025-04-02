@@ -1,116 +1,166 @@
 import {Injectable} from '@nestjs/common';
-import {AuthRequestOtpDto} from './dto/auth-request-otp.dto';
-import {AuthVerifyOtpDto} from './dto/auth-verify-otp.dto';
-import {BaseResponse} from '../../utils/base-response';
+import {JwtService} from '@nestjs/jwt';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
-import {OtpVerification} from "./entities/otp_verification.entity";
-import {User} from "./entities/user.entity";
+import {OtpVerification} from './entities/otp_verification.entity';
+import {User} from './entities/user.entity';
+import {AuthRequestOtpDto} from './dto/auth-request-otp.dto';
+import {AuthVerifyOtpDto} from './dto/auth-verify-otp.dto';
+import {BaseResponse} from "../../utils/base-response";
 import {EngagementIdentifier} from "../engagement-identifier/entities/engagement_identifiers.entity";
+import {getCountryNameByCode} from "../../utils/country-mapping";
+import {I18nService} from "../../i18n/ i18n.service";
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
         @InjectRepository(OtpVerification)
         private readonly otpRepo: Repository<OtpVerification>,
+        @InjectRepository(User)
+        private readonly userRepo: Repository<User>,
+        private readonly jwtService: JwtService,
         @InjectRepository(EngagementIdentifier)
         private readonly engagementRepo: Repository<EngagementIdentifier>,
+        private readonly i18n: I18nService,
     ) {
     }
 
-    async requestOtp(dto: AuthRequestOtpDto) {
-        // Validate input
+    async requestOtp(dto: AuthRequestOtpDto, language: string | undefined) {
         if (!dto.countryCode || !dto.phoneNumber) {
-            throw new Error('Country code and phone number cannot be null or empty');
+            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_PHONE_EMPTY'));
         }
 
-        // Remove leading '+' from countryCode, if present
-        const sanitizedCountryCode = dto.countryCode.replace(/^\+/, '');
+        // ✅ Sanitize countryCode
+        const countryCode = dto.countryCode.replace(/^\+/, '');
 
-        // Concatenate country code and phone number to create customerId
-        const customerId = `${sanitizedCountryCode}${dto.phoneNumber}`;
-
-        // Check if user exists
-        const existingUser = await this.userRepo.findOne({
-            where: {customer_id: customerId},
-        });
-
-        // Generate a 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Create OTP verification record
-        const otpRecord = this.otpRepo.create({
-            country_code: sanitizedCountryCode,
+        const otpEntity = this.otpRepo.create({
             phone_number: dto.phoneNumber,
-            otp,
-            expires_at: new Date(Date.now() + 5 * 60 * 1000), // Expires in 5 minutes
+            country_code: countryCode,
+            otp: otp,
+            device_id: dto.deviceId,
+            devicePlatform: dto.devicePlatform,
+            device_model: dto.deviceModel,
+            expires_at: new Date(Date.now() + 5 * 60 * 1000), // OTP valid for 5 minutes
         });
 
-        // Save OTP verification record
-        await this.otpRepo.save(otpRecord);
+        await this.otpRepo.save(otpEntity);
 
-        // Return response
-        return BaseResponse.success(
-            {
-                is_user: !!existingUser,
-                otp,
-            },
-            'OTP sent successfully',
-        );
+        return new BaseResponse(true, 200, {
+            countryCode: countryCode,
+            phoneNumber: dto.phoneNumber,
+            otp: otp,
+        }, this.i18n.getMessage(language, 'OTP_REQUESTED_SUCCESSFULLY'));
     }
 
-    async verifyOtp(dto: AuthVerifyOtpDto): Promise<BaseResponse<any>> {
-        const customerId = `${dto.countryCode}${dto.phoneNumber}`;
+    async verifyOtp(dto: AuthVerifyOtpDto, language: string | undefined) {
+        if (!dto.countryCode || !dto.phoneNumber) {
+            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_PHONE_EMPTY'));
+        }
+
+        const countryCode = dto.countryCode.replace(/^\+/, '');
+        const now = new Date();
+
         const otpRecord = await this.otpRepo.findOne({
             where: {
-                country_code: dto.countryCode,
                 phone_number: dto.phoneNumber,
+                country_code: countryCode,
                 otp: dto.otp,
             },
         });
 
         if (!otpRecord) {
-            return BaseResponse.error('Invalid OTP', 400);
+            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'INVALID_OTP'));
         }
 
+        if (otpRecord.expires_at && otpRecord.expires_at < now) {
+            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'OTP_EXPIRED'));
+        }
+
+        // Check if user exists
         let user = await this.userRepo.findOne({
             where: {
                 phone_number: dto.phoneNumber,
-                country_code: dto.countryCode,
+                country_code: countryCode,
             },
         });
 
+        let isNewUser = false;
         if (!user) {
-            const nextCustomerId = await this.generateNextCustomerId();
+            const customerId = await this.generateNextCustomerId();
             user = this.userRepo.create({
-                customer_id: nextCustomerId,
+                country_code: countryCode,
                 phone_number: dto.phoneNumber,
-                country_code: dto.countryCode,
+                device_id: dto.deviceId,
+                language: dto.language,
+                app_version: dto.appVersion,
+                is_google_play: dto.isGooglePlay,
+                devicePlatform: dto.devicePlatform,
+                customer_id: customerId,
             });
             await this.userRepo.save(user);
+            isNewUser = true;
+
+            // ✅ Update engagement_identifiers if deviceId found
+            const engagement = await this.engagementRepo.findOne({
+                where: {deviceId: dto.deviceId},
+            });
+            if (engagement) {
+                await this.engagementRepo.update(
+                    {deviceId: dto.deviceId},
+                    {customer_id: customerId, isRegistered: true},
+                );
+            }
+        } else {
+            // Existing user → update
+            user.device_id = dto.deviceId;
+            user.device_model = dto.deviceModel;
+            user.language = dto.language;
+            user.app_version = dto.appVersion;
+            user.is_google_play = dto.isGooglePlay;
+            user.devicePlatform = dto.devicePlatform;
+            await this.userRepo.save(user);
+
+            // ✅ Update engagement_identifiers if deviceId found
+            const engagement = await this.engagementRepo.findOne({
+                where: {deviceId: dto.deviceId},
+            });
+            if (engagement) {
+                await this.engagementRepo.update(
+                    {deviceId: dto.deviceId},
+                    {isLogin: true},
+                );
+            }
         }
 
-        await this.engagementRepo.update(
-            {customer_id: customerId},
-            {isRegistered: true},
+        const accessToken = this.jwtService.sign(
+            {
+                phoneNumber: dto.phoneNumber,
+                countryCode: countryCode,
+                customerId: user.customer_id,
+            },
+            {secret: process.env.JWT_SECRET, expiresIn: '7d'},
         );
 
-        return BaseResponse.success(
-            {
-                phone_number: `${dto.countryCode}${dto.phoneNumber}`,
-                customer_id: user.customer_id,
-            },
-            'OTP verified successfully',
-        );
+        return new BaseResponse(true, 200, {
+            country_code: countryCode,
+            phone_number: dto.phoneNumber,
+            token: accessToken,
+            customer_id: user.customer_id,
+            full_name: user.full_name || '',
+            is_user: isNewUser,
+            country: getCountryNameByCode(countryCode),
+        }, isNewUser ? this.i18n.getMessage(language, 'REGISTER_SUCCESS') : this.i18n.getMessage(language, 'LOGIN_SUCCESS'));
     }
 
     private async generateNextCustomerId(): Promise<string> {
-        const lastUser = await this.userRepo.findOne({
-            where: {},
-            order: {customer_id: 'DESC'},
-        });
-        return lastUser ? (parseInt(<string>lastUser.customer_id) + 1).toString() : '100000';
+        const lastUser = await this.userRepo.createQueryBuilder('user')
+            .orderBy('user.customer_id', 'DESC')
+            .getOne();
+
+        return lastUser
+            ? (parseInt(<string>lastUser.customer_id) + 1).toString()
+            : '100000';
     }
 }

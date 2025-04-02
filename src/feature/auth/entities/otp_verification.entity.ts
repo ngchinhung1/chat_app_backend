@@ -4,6 +4,8 @@ import {
     Column,
     CreateDateColumn,
 } from 'typeorm';
+import {IsEnum, IsOptional} from "class-validator";
+import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 @Entity('otp_verifications')
 export class OtpVerification {
@@ -11,16 +13,26 @@ export class OtpVerification {
     id!: string;
 
     @Column()
-    phone_number!: string;
+    phone_number?: string;
 
     @Column()
-    country_code!: string;
+    country_code?: string;
 
     @Column()
     otp?: string;
 
     @Column()
-    expires_at?: Date;
+    device_id?: string;
+
+    @IsOptional()
+    @IsEnum(DevicePlatform)
+    devicePlatform?: DevicePlatform;
+
+    @Column()
+    device_model?: string;
+
+    @Column({ nullable: false })
+    expires_at!: Date;
 
     @Column({ name: 'is_verified', default: false })
     isVerified!: boolean;

@@ -1,5 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
-import {EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {DevicePlatform, EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 @Entity('users')
 export class User {
@@ -21,6 +21,16 @@ export class User {
     @OneToMany(() => EngagementIdentifier, (engagement) => engagement.user)
     engagementIdentifiers?: EngagementIdentifier[];
 
+    @Column({nullable: true})
+    notificationToken?: string;
+
+    @Column({nullable: true})
+    advertisementId?: string;
+
+    @Column({nullable: true})
+    @Column({type: 'enum', enum: DevicePlatform})
+    devicePlatform?: DevicePlatform;
+
     @Column({name: 'is_verified', default: false})
     isVerified!: boolean;
 
@@ -39,10 +49,34 @@ export class User {
     @Column({nullable: true})
     deleted_at!: Date;
 
+    @Column({nullable: true})
+    full_name?: string;
+
+    @Column({nullable: true})
+    country?: string;
+
+    @Column({nullable: true})
+    deviceModel?: string;
+
     @Column({name: 'created_at'})
     @CreateDateColumn()
     createdAt!: Date;
 
     @UpdateDateColumn()
     updated_at!: Date;
+
+    @Column({nullable: true})
+    device_id?: string;
+
+    @Column({nullable: true})
+    device_model?: string;
+
+    @Column({nullable: true})
+    language?: string;
+
+    @Column({nullable: true})
+    app_version?: string;
+
+    @Column({nullable: true})
+    is_google_play?: boolean;
 }

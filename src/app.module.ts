@@ -1,8 +1,11 @@
-import {Module} from '@nestjs/common';
+import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {ConfigModule} from '@nestjs/config';
 import {AuthModule} from './feature/auth/auth.module';
 import {ChatModule} from './feature/chat/chat.module';
+import {EngagementIdentifierModule} from "./feature/engagement-identifier/engagement_identifier.module";
+import {MobileSettingModule} from "./feature/settings/mobile_setting.module";
+import {LanguageMiddleware} from "./middleware/language.middleware";
 
 @Module({
     imports: [
@@ -23,7 +26,14 @@ import {ChatModule} from './feature/chat/chat.module';
 
         AuthModule,
         ChatModule,
+        EngagementIdentifierModule,
+        MobileSettingModule,
     ],
 })
 export class AppModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(LanguageMiddleware)
+            .forRoutes({path: '*', method: RequestMethod.ALL});
+    }
 }

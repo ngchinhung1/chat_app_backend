@@ -40,6 +40,19 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "engagementIdentifiers", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "notificationToken", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "advertisementId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    (0, typeorm_1.Column)({ type: 'enum', enum: engagement_identifiers_entity_1.DevicePlatform }),
+    __metadata("design:type", String)
+], User.prototype, "devicePlatform", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'is_verified', default: false }),
     __metadata("design:type", Boolean)
 ], User.prototype, "isVerified", void 0);
@@ -64,6 +77,18 @@ __decorate([
     __metadata("design:type", Date)
 ], User.prototype, "deleted_at", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "full_name", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "country", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "deviceModel", void 0);
+__decorate([
     (0, typeorm_1.Column)({ name: 'created_at' }),
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
@@ -72,6 +97,26 @@ __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
 ], User.prototype, "updated_at", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "device_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "device_model", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "language", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "app_version", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Boolean)
+], User.prototype, "is_google_play", void 0);
 exports.User = User = __decorate([
     (0, typeorm_1.Entity)('users')
 ], User);

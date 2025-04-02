@@ -7,14 +7,14 @@ import {ChatParticipant} from "./entities/chat_participant.entity";
 import {Message} from "./entities/message.entity";
 import {User} from "../auth/entities/user.entity";
 import {AuthModule} from "../auth/auth.module";
-import {WsJwtGuard} from "../../config/guards/jwtAuthGuard";
+import {JwtWsAuthGuard} from "../../config/guards/jwtWsAuth.guard";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([ChatList, ChatParticipant, Message, User]),
         AuthModule,
     ],
-    providers: [ChatGateway, ChatService, WsJwtGuard],
+    providers: [ChatGateway, ChatService, JwtWsAuthGuard],
 })
 export class ChatModule {
 }

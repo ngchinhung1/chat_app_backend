@@ -11,18 +11,34 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthRequestOtpDto = void 0;
 const class_validator_1 = require("class-validator");
+const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 class AuthRequestOtpDto {
 }
 exports.AuthRequestOtpDto = AuthRequestOtpDto;
 __decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Country code cannot be empty' }),
-    (0, class_validator_1.IsString)({ message: 'Country code must be a string' }),
-    (0, class_validator_1.Matches)(/^\+?\d+$/, { message: 'Country code must contain only digits and may start with a plus sign' }),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^\+?\d+$/),
     __metadata("design:type", String)
 ], AuthRequestOtpDto.prototype, "countryCode", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: 'Phone number cannot be empty' }),
-    (0, class_validator_1.IsString)({ message: 'Phone number must be a string' }),
-    (0, class_validator_1.Matches)(/^\d+$/, { message: 'Phone number must contain only digits' }),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^\d+$/),
     __metadata("design:type", String)
 ], AuthRequestOtpDto.prototype, "phoneNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(engagement_identifiers_entity_1.DevicePlatform),
+    __metadata("design:type", String)
+], AuthRequestOtpDto.prototype, "devicePlatform", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthRequestOtpDto.prototype, "deviceId", void 0);
+__decorate([
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], AuthRequestOtpDto.prototype, "deviceModel", void 0);

@@ -12,7 +12,15 @@ const typeorm_1 = require("@nestjs/typeorm");
 const config_1 = require("@nestjs/config");
 const auth_module_1 = require("./feature/auth/auth.module");
 const chat_module_1 = require("./feature/chat/chat.module");
+const engagement_identifier_module_1 = require("./feature/engagement-identifier/engagement_identifier.module");
+const mobile_setting_module_1 = require("./feature/settings/mobile_setting.module");
+const language_middleware_1 = require("./middleware/language.middleware");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer
+            .apply(language_middleware_1.LanguageMiddleware)
+            .forRoutes({ path: '*', method: common_1.RequestMethod.ALL });
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
@@ -33,6 +41,8 @@ exports.AppModule = AppModule = __decorate([
             }),
             auth_module_1.AuthModule,
             chat_module_1.ChatModule,
+            engagement_identifier_module_1.EngagementIdentifierModule,
+            mobile_setting_module_1.MobileSettingModule,
         ],
     })
 ], AppModule);

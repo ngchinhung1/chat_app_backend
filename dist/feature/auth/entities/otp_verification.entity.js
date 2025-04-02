@@ -11,6 +11,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OtpVerification = void 0;
 const typeorm_1 = require("typeorm");
+const class_validator_1 = require("class-validator");
+const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 let OtpVerification = class OtpVerification {
 };
 exports.OtpVerification = OtpVerification;
@@ -32,6 +34,19 @@ __decorate([
 ], OtpVerification.prototype, "otp", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], OtpVerification.prototype, "device_id", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(engagement_identifiers_entity_1.DevicePlatform),
+    __metadata("design:type", String)
+], OtpVerification.prototype, "devicePlatform", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], OtpVerification.prototype, "device_model", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: false }),
     __metadata("design:type", Date)
 ], OtpVerification.prototype, "expires_at", void 0);
 __decorate([

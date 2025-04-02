@@ -18,7 +18,7 @@ export enum DevicePlatform {
 
 @Entity('engagement_identifiers')
 export class EngagementIdentifier {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn()
     id!: string;
 
     @Column({nullable: true})
@@ -45,8 +45,11 @@ export class EngagementIdentifier {
     @Column({nullable: true})
     locale?: string;
 
-    @Column({default: false})
-    isRegistered!: boolean;
+    @Column({ default: false })
+    isLogin?: boolean;
+
+    @Column({ default: false })
+    isRegistered?: boolean;
 
     @ManyToOne(() => User, {nullable: true, onDelete: 'SET NULL'})
     @JoinColumn({name: 'customer_id', referencedColumnName: 'customer_id'})

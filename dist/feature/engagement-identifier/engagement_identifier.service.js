@@ -26,35 +26,40 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const engagement_identifiers_entity_1 = require("./entities/engagement_identifiers.entity");
+const base_response_1 = require("../../utils/base-response");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let EngagementIdentifierService = class EngagementIdentifierService {
-    constructor(engagementRepo) {
+    constructor(engagementRepo, i18n) {
         this.engagementRepo = engagementRepo;
+        this.i18n = i18n;
     }
-    create(createDto) {
+    createOrUpdate(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
-            const engagement = this.engagementRepo.create(createDto);
-            return yield this.engagementRepo.save(engagement);
+            const existing = yield this.engagementRepo.findOne({ where: { notificationToken: dto.notificationToken } });
+            if (existing) {
+                yield this.engagementRepo.update(existing.id, dto);
+                return new base_response_1.BaseResponse(true, 200, null, this.i18n.getMessage(language, 'UPDATED_SUCCESSFULLY'));
+            }
+            const engagement = this.engagementRepo.create(dto);
+            yield this.engagementRepo.save(engagement);
+            return new base_response_1.BaseResponse(true, 201, null, this.i18n.getMessage(language, 'CREATED_SUCCESSFULLY'));
         });
     }
-    findAll() {
+    findByDeviceId(deviceId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.engagementRepo.find();
+            return yield this.engagementRepo.findOne({
+                where: { deviceId: deviceId },
+            });
         });
     }
-    findOne(id) {
+    updateDeviceInfo(dto, customerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.engagementRepo.findOne({ where: { id } });
-        });
-    }
-    update(id, updateDto) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.engagementRepo.update(id, updateDto);
-            return this.findOne(id);
-        });
-    }
-    remove(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.engagementRepo.delete(id);
+            yield this.engagementRepo.update({ deviceId: dto.deviceId }, {
+                notificationToken: dto.notificationToken,
+                advertisementId: dto.advertisementId,
+                devicePlatform: dto.devicePlatform,
+                customer_id: customerId,
+            });
         });
     }
 };
@@ -62,5 +67,6 @@ exports.EngagementIdentifierService = EngagementIdentifierService;
 exports.EngagementIdentifierService = EngagementIdentifierService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(engagement_identifiers_entity_1.EngagementIdentifier)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        _i18n_service_1.I18nService])
 ], EngagementIdentifierService);

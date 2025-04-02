@@ -1,13 +1,26 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import {IsEnum, IsNotEmpty, IsOptional, IsString, Matches} from 'class-validator';
+import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 export class AuthRequestOtpDto {
-    @IsNotEmpty({ message: 'Country code cannot be empty' })
-    @IsString({ message: 'Country code must be a string' })
-    @Matches(/^\+?\d+$/, { message: 'Country code must contain only digits and may start with a plus sign' })
+    @IsNotEmpty()
+    @IsString()
+    @Matches(/^\+?\d+$/)
     countryCode?: string;
 
-    @IsNotEmpty({ message: 'Phone number cannot be empty' })
-    @IsString({ message: 'Phone number must be a string' })
-    @Matches(/^\d+$/, { message: 'Phone number must contain only digits' })
+    @IsNotEmpty()
+    @IsString()
+    @Matches(/^\d+$/)
     phoneNumber?: string;
+
+    @IsOptional()
+    @IsEnum(DevicePlatform)
+    devicePlatform?: DevicePlatform;
+
+    @IsNotEmpty()
+    @IsString()
+    deviceId?: string;
+
+    @IsNotEmpty()
+    @IsString()
+    deviceModel?: string;
 }

@@ -16,6 +16,7 @@ const auth_service_1 = require("./auth.service");
 const otp_verification_entity_1 = require("./entities/otp_verification.entity");
 const jwt_strategy_1 = require("../../config/jwt.strategy");
 const engagement_identifiers_entity_1 = require("../engagement-identifier/entities/engagement_identifiers.entity");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
@@ -28,7 +29,7 @@ exports.AuthModule = AuthModule = __decorate([
                 signOptions: { expiresIn: '1d' },
             }),
         ],
-        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy],
+        providers: [auth_service_1.AuthService, jwt_strategy_1.JwtStrategy, _i18n_service_1.I18nService],
         controllers: [auth_controller_1.AuthController],
         exports: [jwt_1.JwtModule],
     })

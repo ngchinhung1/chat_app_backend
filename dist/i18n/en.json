@@ -1,0 +1,14 @@
+{
+    "COUNTRY_CODE_EMPTY": "Country code cannot be empty",
+    "PHONE_NUMBER_EMPTY": "Phone number cannot be empty",
+    "COUNTRY_PHONE_EMPTY": "Country code and phone number cannot be empty",
+    "OTP_REQUESTED_SUCCESSFULLY": "OTP requested successfully",
+    "INVALID_OTP": "Invalid OTP",
+    "OTP_EXPIRED": "OTP has expired",
+    "REGISTER_SUCCESS": "Register success",
+    "LOGIN_SUCCESS": "Login success",
+    "UPDATED_SUCCESSFULLY": "Updated successfully",
+    "CREATED_SUCCESSFULLY": "Created successfully",
+    "NO_SETTINGS_CONFIGURED": "No settings configured",
+    "MOBILE_SETTINGS_FETCHED_SUCCESSFULLY": "Mobile settings fetched successfully"
+}

@@ -23,7 +23,7 @@ let EngagementIdentifier = class EngagementIdentifier {
 };
 exports.EngagementIdentifier = EngagementIdentifier;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", String)
 ], EngagementIdentifier.prototype, "id", void 0);
 __decorate([
@@ -58,6 +58,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], EngagementIdentifier.prototype, "locale", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], EngagementIdentifier.prototype, "isLogin", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)

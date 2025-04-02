@@ -7,6 +7,7 @@ import {AuthService} from "./auth.service";
 import {OtpVerification} from "./entities/otp_verification.entity";
 import {JwtStrategy} from "../../config/jwt.strategy";
 import {EngagementIdentifier} from "../engagement-identifier/entities/engagement_identifiers.entity";
+import {I18nService} from "../../i18n/ i18n.service";
 
 @Module({
     imports: [
@@ -16,7 +17,7 @@ import {EngagementIdentifier} from "../engagement-identifier/entities/engagement
             signOptions: {expiresIn: '1d'},
         }),
     ],
-    providers: [AuthService, JwtStrategy],
+    providers: [AuthService, JwtStrategy, I18nService],
     controllers: [AuthController],
     exports: [JwtModule],
 })

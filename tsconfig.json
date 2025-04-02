@@ -1,15 +1,22 @@
 {
-    "compilerOptions": {
-      "module": "CommonJS",
-      "target": "ES6",
-      "strict": true,
-      "moduleResolution": "node",
-      "experimentalDecorators": true,
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES6",
+    "strict": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-      "rootDir": "src",
-      "outDir": "dist",
-      "esModuleInterop": true
-    },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-  }
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

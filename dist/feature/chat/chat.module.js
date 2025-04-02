@@ -16,7 +16,7 @@ const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
 const auth_module_1 = require("../auth/auth.module");
-const jwtAuthGuard_1 = require("../../config/guards/jwtAuthGuard");
+const jwtWsAuth_guard_1 = require("../../config/guards/jwtWsAuth.guard");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
@@ -26,6 +26,6 @@ exports.ChatModule = ChatModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([chat_list_entity_1.ChatList, chat_participant_entity_1.ChatParticipant, message_entity_1.Message, user_entity_1.User]),
             auth_module_1.AuthModule,
         ],
-        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService, jwtAuthGuard_1.WsJwtGuard],
+        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService, jwtWsAuth_guard_1.JwtWsAuthGuard],
     })
 ], ChatModule);

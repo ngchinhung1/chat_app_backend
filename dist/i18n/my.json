@@ -1,0 +1,14 @@
+{
+    "COUNTRY_CODE_EMPTY": "Kod negara tidak boleh kosong",
+    "PHONE_NUMBER_EMPTY": "Nombor telefon tidak boleh kosong",
+    "COUNTRY_PHONE_EMPTY": "Kod negara dan nombor telefon tidak boleh kosong",
+    "OTP_REQUESTED_SUCCESSFULLY": "Permintaan OTP berjaya",
+    "INVALID_OTP": "OTP tidak sah",
+    "OTP_EXPIRED": "OTP telah tamat tempoh",
+    "REGISTER_SUCCESS": "Pendaftaran berjaya",
+    "LOGIN_SUCCESS": "Log masuk berjaya",
+    "UPDATED_SUCCESSFULLY": "Berjaya dikemaskini",
+    "CREATED_SUCCESSFULLY": "Berjaya dicipta",
+    "NO_SETTINGS_CONFIGURED": "Tiada tetapan dikonfigurasikan",
+    "MOBILE_SETTINGS_FETCHED_SUCCESSFULLY": "Tetapan mudah alih berjaya diambil"
+}

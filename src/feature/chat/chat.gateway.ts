@@ -10,14 +10,14 @@ import {Server, Socket} from 'socket.io';
 import {UseGuards} from '@nestjs/common';
 import {JwtPayload} from '../auth/interfaces/jwt-payload.interface';
 import {ChatService} from './chat.service';
-import {WsJwtGuard} from "../../config/guards/jwtAuthGuard";
+import {JwtWsAuthGuard} from "../../config/guards/jwtWsAuth.guard";
 
 @WebSocketGateway({
     cors: {
         origin: '*',
     },
 })
-@UseGuards(WsJwtGuard)
+@UseGuards(JwtWsAuthGuard)
 export class ChatGateway implements OnGatewayConnection {
     constructor(private readonly chatService: ChatService) {
     }
