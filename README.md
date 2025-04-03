@@ -61,8 +61,12 @@ DB_TYPE=mysql
 DB_HOST=localhost
 DB_PORT=3306
 DB_USERNAME=root
-DB_PASSWORD=password
+DB_PASSWORD=root
 DB_DATABASE=chat_app_database
+
+# TypeORM SQLite Database Config
+STORAGE_DRIVER=local
+LOCAL_UPLOAD_PATH=./uploads/profile
 ```
 
 Make sure the database specified in `DB_DATABASE` exists, or modify the name accordingly.
