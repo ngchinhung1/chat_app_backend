@@ -51,6 +51,7 @@ let MobileSettingController = class MobileSettingController {
             if (!settings) {
                 return new base_response_1.BaseResponse(true, 200, {
                     link: null,
+                    devicePlatform: null,
                     mobile_version: null,
                     major_update: false,
                     is_maintenance: false,
@@ -58,6 +59,7 @@ let MobileSettingController = class MobileSettingController {
             }
             return new base_response_1.BaseResponse(true, 200, {
                 link: settings.link,
+                devicePlatform: settings.devicePlatform,
                 mobile_version: settings.mobileVersion,
                 major_update: settings.majorUpdate,
                 is_maintenance: settings.isMaintenance,

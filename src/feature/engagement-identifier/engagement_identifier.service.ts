@@ -17,11 +17,19 @@ export class EngagementIdentifierService {
     }
 
     async createOrUpdate(dto: CreateEngagementDto, language: string | undefined) {
-        const existing = await this.engagementRepo.findOne({where: {notificationToken: dto.notificationToken}});
+        const existing = await this.engagementRepo.findOne({
+            where: {
+                deviceId: dto.deviceId,
+            },
+        });
+
         if (existing) {
-            await this.engagementRepo.update(existing.id, dto);
+            // Only update notificationToken
+            await this.engagementRepo.update(existing.id, {notificationToken: dto.notificationToken});
             return new BaseResponse(true, 200, null, this.i18n.getMessage(language, 'UPDATED_SUCCESSFULLY'));
         }
+
+        // Create new engagement
         const engagement = this.engagementRepo.create(dto);
         await this.engagementRepo.save(engagement);
         return new BaseResponse(true, 201, null, this.i18n.getMessage(language, 'CREATED_SUCCESSFULLY'));

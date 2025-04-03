@@ -35,11 +35,17 @@ let EngagementIdentifierService = class EngagementIdentifierService {
     }
     createOrUpdate(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
-            const existing = yield this.engagementRepo.findOne({ where: { notificationToken: dto.notificationToken } });
+            const existing = yield this.engagementRepo.findOne({
+                where: {
+                    deviceId: dto.deviceId,
+                },
+            });
             if (existing) {
-                yield this.engagementRepo.update(existing.id, dto);
+                // Only update notificationToken
+                yield this.engagementRepo.update(existing.id, { notificationToken: dto.notificationToken });
                 return new base_response_1.BaseResponse(true, 200, null, this.i18n.getMessage(language, 'UPDATED_SUCCESSFULLY'));
             }
+            // Create new engagement
             const engagement = this.engagementRepo.create(dto);
             yield this.engagementRepo.save(engagement);
             return new base_response_1.BaseResponse(true, 201, null, this.i18n.getMessage(language, 'CREATED_SUCCESSFULLY'));
