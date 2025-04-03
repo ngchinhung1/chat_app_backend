@@ -6,6 +6,8 @@ import {ChatModule} from './feature/chat/chat.module';
 import {EngagementIdentifierModule} from "./feature/engagement-identifier/engagement_identifier.module";
 import {MobileSettingModule} from "./feature/settings/mobile_setting.module";
 import {LanguageMiddleware} from "./middleware/language.middleware";
+import {ProfileModule} from "./feature/profile/profile.module";
+import {StorageModule} from "./shared/storage/storage.module";
 
 @Module({
     imports: [
@@ -28,6 +30,8 @@ import {LanguageMiddleware} from "./middleware/language.middleware";
         ChatModule,
         EngagementIdentifierModule,
         MobileSettingModule,
+        ProfileModule,
+        StorageModule,
     ],
 })
 export class AppModule {

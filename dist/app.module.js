@@ -15,6 +15,8 @@ const chat_module_1 = require("./feature/chat/chat.module");
 const engagement_identifier_module_1 = require("./feature/engagement-identifier/engagement_identifier.module");
 const mobile_setting_module_1 = require("./feature/settings/mobile_setting.module");
 const language_middleware_1 = require("./middleware/language.middleware");
+const profile_module_1 = require("./feature/profile/profile.module");
+const storage_module_1 = require("./shared/storage/storage.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer
@@ -43,6 +45,8 @@ exports.AppModule = AppModule = __decorate([
             chat_module_1.ChatModule,
             engagement_identifier_module_1.EngagementIdentifierModule,
             mobile_setting_module_1.MobileSettingModule,
+            profile_module_1.ProfileModule,
+            storage_module_1.StorageModule,
         ],
     })
 ], AppModule);

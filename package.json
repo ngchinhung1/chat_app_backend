@@ -16,6 +16,8 @@
     },
     "keywords": [],
     "dependencies": {
+        "@aws-sdk/client-s3": "^3.779.0",
+        "@aws-sdk/s3-request-presigner": "^3.779.0",
         "@nestjs/common": "^11.0.10",
         "@nestjs/config": "^4.0.1",
         "@nestjs/core": "^11.0.10",
@@ -48,6 +50,7 @@
         "@types/bcrypt": "^5.0.2",
         "@types/express": "^5.0.1",
         "@types/jest": "^29.5.14",
+        "@types/multer": "^1.4.12",
         "@types/passport-jwt": "^4.0.1",
         "jest": "^29.7.0",
         "ts-jest": "^29.2.6",

@@ -10,5 +10,9 @@
     "UPDATED_SUCCESSFULLY": "Updated successfully",
     "CREATED_SUCCESSFULLY": "Created successfully",
     "NO_SETTINGS_CONFIGURED": "No settings configured",
-    "MOBILE_SETTINGS_FETCHED_SUCCESSFULLY": "Mobile settings fetched successfully"
+    "MOBILE_SETTINGS_FETCHED_SUCCESSFULLY": "Mobile settings fetched successfully",
+    "USER_NOT_FOUND": "User not found",
+    "USER_PROFILE_UPDATED_SUCCESSFULLY": "Profile updated successfully",
+    "USER_PROFILE_CREATED_SUCCESSFULLY": "Profile created successfully",
+    "IMAGE_UPLOADED_SUCCESSFULLY": "Image uploaded successfully"
 }
