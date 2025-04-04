@@ -1,5 +1,5 @@
 import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
-import {DevicePlatform, EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 @Entity('users')
 export class User {
@@ -15,21 +15,14 @@ export class User {
     @Column({nullable: true})
     name?: string;
 
-    @Column({nullable: true, type: 'text'})
+    @Column({nullable: true})
     profile_image?: string;
 
     @OneToMany(() => EngagementIdentifier, (engagement) => engagement.user)
     engagementIdentifiers?: EngagementIdentifier[];
 
     @Column({nullable: true})
-    notificationToken?: string;
-
-    @Column({nullable: true})
-    advertisementId?: string;
-
-    @Column({nullable: true})
-    @Column({type: 'enum', enum: DevicePlatform})
-    devicePlatform?: DevicePlatform;
+    devicePlatform?: string;
 
     @Column({name: 'is_verified', default: false})
     isVerified!: boolean;
@@ -50,13 +43,7 @@ export class User {
     deleted_at!: Date;
 
     @Column({nullable: true})
-    full_name?: string;
-
-    @Column({nullable: true})
     country?: string;
-
-    @Column({nullable: true})
-    deviceModel?: string;
 
     @Column({name: 'created_at'})
     @CreateDateColumn()

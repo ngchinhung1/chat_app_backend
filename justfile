@@ -1,3 +1,5 @@
+clean-build:
+  rm -rf dist
 
 start-build:
   npm run start:dev

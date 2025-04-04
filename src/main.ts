@@ -2,6 +2,7 @@ import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
 import {ValidationPipe, BadRequestException} from '@nestjs/common';
 import {I18nService} from "./i18n/ i18n.service";
+import {ApiLoggerInterceptor} from "./log/log.interceptor";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -35,6 +36,7 @@ async function bootstrap() {
             transform: true,
         }),
     );
+    app.useGlobalInterceptors(app.get(ApiLoggerInterceptor));
 
     await app.listen(3000, '0.0.0.0');
     console.log('✅ Server running on http://localhost:3000');

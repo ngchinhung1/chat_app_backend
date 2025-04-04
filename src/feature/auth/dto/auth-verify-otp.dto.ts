@@ -1,5 +1,4 @@
-import {IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString} from 'class-validator';
-import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {IsBoolean, IsNotEmpty, IsOptional, IsString} from 'class-validator';
 
 export class AuthVerifyOtpDto {
     @IsNotEmpty()
@@ -15,8 +14,8 @@ export class AuthVerifyOtpDto {
     otp?: string;
 
     @IsOptional()
-    @IsEnum(DevicePlatform)
-    devicePlatform?: DevicePlatform;
+    @IsString()
+    devicePlatform?: string;
 
     @IsOptional()
     @IsString()

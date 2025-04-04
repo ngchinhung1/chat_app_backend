@@ -8,8 +8,8 @@ import {AuthRequestOtpDto} from './dto/auth-request-otp.dto';
 import {AuthVerifyOtpDto} from './dto/auth-verify-otp.dto';
 import {BaseResponse} from "../../utils/base-response";
 import {EngagementIdentifier} from "../engagement-identifier/entities/engagement_identifiers.entity";
-import {getCountryNameByCode} from "../../utils/country-mapping";
 import {I18nService} from "../../i18n/ i18n.service";
+import {getCountryNameByCode} from "../../utils/country-mapping";
 
 @Injectable()
 export class AuthService {
@@ -54,14 +54,16 @@ export class AuthService {
         }, this.i18n.getMessage(language, 'OTP_REQUESTED_SUCCESSFULLY'));
     }
 
-    async verifyOtp(dto: AuthVerifyOtpDto, language: string | undefined) {
+    async verifyOtp(dto: AuthVerifyOtpDto, language?: string) {
+        // ✅ 1. Validate input
         if (!dto.countryCode || !dto.phoneNumber) {
-            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_PHONE_EMPTY'));
+            return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_CODE_EMPTY'));
         }
 
         const countryCode = dto.countryCode.replace(/^\+/, '');
         const now = new Date();
 
+        // ✅ 2. Find OTP record
         const otpRecord = await this.otpRepo.findOne({
             where: {
                 phone_number: dto.phoneNumber,
@@ -78,7 +80,17 @@ export class AuthService {
             return new BaseResponse(false, 400, null, this.i18n.getMessage(language, 'OTP_EXPIRED'));
         }
 
-        // Check if user exists
+        // ✅ 3. Define device/app info (used in both register & login)
+        const deviceInfo = {
+            device_id: dto.deviceId,
+            device_model: dto.deviceModel,
+            devicePlatform: dto.devicePlatform,
+            language: dto.language,
+            app_version: dto.appVersion,
+            is_google_play: dto.isGooglePlay,
+        };
+
+        // ✅ 4. Check if user exists
         let user = await this.userRepo.findOne({
             where: {
                 phone_number: dto.phoneNumber,
@@ -87,71 +99,64 @@ export class AuthService {
         });
 
         let isNewUser = false;
+
         if (!user) {
+            // ✅ Register new user
             const customerId = await this.generateNextCustomerId();
             user = this.userRepo.create({
-                country_code: countryCode,
                 phone_number: dto.phoneNumber,
-                device_id: dto.deviceId,
-                language: dto.language,
-                app_version: dto.appVersion,
-                is_google_play: dto.isGooglePlay,
-                devicePlatform: dto.devicePlatform,
+                country_code: countryCode,
                 customer_id: customerId,
+                country: getCountryNameByCode(countryCode),
+                ...deviceInfo,
             });
             await this.userRepo.save(user);
             isNewUser = true;
 
-            // ✅ Update engagement_identifiers if deviceId found
-            const engagement = await this.engagementRepo.findOne({
-                where: {deviceId: dto.deviceId},
-            });
+            // ✅ Update engagement_identifiers: isRegistered = true, add customer_id
+            const engagement = await this.engagementRepo.findOne({where: {deviceId: dto.deviceId}});
             if (engagement) {
-                await this.engagementRepo.update(
-                    {deviceId: dto.deviceId},
-                    {customer_id: customerId, isRegistered: true},
-                );
+                this.engagementRepo.merge(engagement, {
+                    isRegistered: true,
+                    customer_id: customerId,
+                });
+                await this.engagementRepo.save(engagement);
             }
+
         } else {
-            // Existing user → update
-            user.device_id = dto.deviceId;
-            user.device_model = dto.deviceModel;
-            user.language = dto.language;
-            user.app_version = dto.appVersion;
-            user.is_google_play = dto.isGooglePlay;
-            user.devicePlatform = dto.devicePlatform;
+            // ✅ Existing user: update login device info
+            this.userRepo.merge(user, deviceInfo);
             await this.userRepo.save(user);
 
-            // ✅ Update engagement_identifiers if deviceId found
-            const engagement = await this.engagementRepo.findOne({
-                where: {deviceId: dto.deviceId},
-            });
+            // ✅ Update engagement_identifiers: isLogin = true
+            const engagement = await this.engagementRepo.findOne({where: {deviceId: dto.deviceId}});
             if (engagement) {
-                await this.engagementRepo.update(
-                    {deviceId: dto.deviceId},
-                    {isLogin: true},
-                );
+                this.engagementRepo.merge(engagement, {
+                    isLogin: true,
+                });
+                await this.engagementRepo.save(engagement);
             }
         }
 
-        const accessToken = this.jwtService.sign(
-            {
-                phoneNumber: dto.phoneNumber,
-                countryCode: countryCode,
-                customerId: user.customer_id,
-            },
-            {secret: process.env.JWT_SECRET, expiresIn: '7d'},
-        );
+        // ✅ 5. Generate JWT token
+        const token = this.jwtService.sign({
+            sub: user.customer_id,
+            phone: user.phone_number,
+        }, {
+            secret: process.env.JWT_SECRET,
+            expiresIn: '7d',
+        });
 
+        // ✅ 6. Return response
         return new BaseResponse(true, 200, {
-            country_code: countryCode,
-            phone_number: dto.phoneNumber,
-            token: accessToken,
+            country_code: user.country_code,
+            phone_number: user.phone_number,
+            token,
             customer_id: user.customer_id,
-            full_name: user.full_name || '',
+            name: user.name ?? '',
             is_user: isNewUser,
-            country: getCountryNameByCode(countryCode),
-        }, isNewUser ? this.i18n.getMessage(language, 'REGISTER_SUCCESS') : this.i18n.getMessage(language, 'LOGIN_SUCCESS'));
+            country: getCountryNameByCode(user.country_code),
+        }, this.i18n.getMessage(language, isNewUser ? 'REGISTER_SUCCESS' : 'LOGIN_SUCCESS'));
     }
 
     private async generateNextCustomerId(): Promise<string> {

@@ -1,5 +1,4 @@
-import {IsEnum, IsNotEmpty, IsOptional, IsString, Matches} from 'class-validator';
-import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {IsNotEmpty, IsOptional, IsString, Matches} from 'class-validator';
 
 export class AuthRequestOtpDto {
     @IsNotEmpty()
@@ -13,8 +12,8 @@ export class AuthRequestOtpDto {
     phoneNumber?: string;
 
     @IsOptional()
-    @IsEnum(DevicePlatform)
-    devicePlatform?: DevicePlatform;
+    @IsString()
+    devicePlatform?: string;
 
     @IsNotEmpty()
     @IsString()

@@ -48,7 +48,7 @@ export class ProfileService {
             // Also update Users table
             await this.userRepo.update(
                 {customer_id: dto.customer_id},
-                {name: dto.name},
+                {name: dto.name, profile_image: dto.profile_image},
             );
 
             return new BaseResponse(true, 201, {
@@ -76,7 +76,7 @@ export class ProfileService {
             if (dto.name) {
                 await this.userRepo.update(
                     {customer_id: dto.customer_id},
-                    {name: dto.name},
+                    {name: dto.name, profile_image: dto.profile_image},
                 );
             }
 

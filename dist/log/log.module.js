@@ -5,24 +5,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatController = void 0;
+exports.LogModule = void 0;
 const common_1 = require("@nestjs/common");
-let ChatController = class ChatController {
-    getChat() {
-        return "Chat endpoint is working!";
-    }
+const typeorm_1 = require("@nestjs/typeorm");
+const api_log_entity_1 = require("./entities/api_log.entity");
+const log_service_1 = require("./log.service");
+let LogModule = class LogModule {
 };
-exports.ChatController = ChatController;
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", String)
-], ChatController.prototype, "getChat", null);
-exports.ChatController = ChatController = __decorate([
-    (0, common_1.Controller)('chat')
-], ChatController);
+exports.LogModule = LogModule;
+exports.LogModule = LogModule = __decorate([
+    (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([api_log_entity_1.ApiLog])],
+        providers: [log_service_1.LogService],
+        exports: [log_service_1.LogService],
+    })
+], LogModule);

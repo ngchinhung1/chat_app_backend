@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MobileSetting = void 0;
 const typeorm_1 = require("typeorm");
-const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 let MobileSetting = class MobileSetting {
 };
 exports.MobileSetting = MobileSetting;
@@ -20,7 +19,7 @@ __decorate([
     __metadata("design:type", String)
 ], MobileSetting.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: engagement_identifiers_entity_1.DevicePlatform }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], MobileSetting.prototype, "devicePlatform", void 0);
 __decorate([

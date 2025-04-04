@@ -1,13 +1,12 @@
 import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
-import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
 
 @Entity()
 export class MobileSetting {
     @PrimaryGeneratedColumn()
     id!: string;
 
-    @Column({ type: 'enum', enum: DevicePlatform })
-    devicePlatform?: DevicePlatform;
+    @Column()
+    devicePlatform?: string;
 
     @Column()
     link!: string;
@@ -15,9 +14,9 @@ export class MobileSetting {
     @Column()
     mobileVersion!: string;
 
-    @Column({ default: false })
+    @Column({default: false})
     majorUpdate!: boolean;
 
-    @Column({ default: false })
+    @Column({default: false})
     isMaintenance!: boolean;
 }

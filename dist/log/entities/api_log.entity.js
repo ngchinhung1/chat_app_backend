@@ -9,54 +9,55 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OtpVerification = void 0;
+exports.ApiLog = void 0;
 const typeorm_1 = require("typeorm");
-const class_validator_1 = require("class-validator");
-let OtpVerification = class OtpVerification {
+let ApiLog = class ApiLog {
 };
-exports.OtpVerification = OtpVerification;
+exports.ApiLog = ApiLog;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
-], OtpVerification.prototype, "id", void 0);
+], ApiLog.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], OtpVerification.prototype, "phone_number", void 0);
+], ApiLog.prototype, "endpoint", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], OtpVerification.prototype, "country_code", void 0);
+], ApiLog.prototype, "method", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], ApiLog.prototype, "request_body", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], ApiLog.prototype, "request_headers", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], ApiLog.prototype, "response_body", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], OtpVerification.prototype, "otp", void 0);
+    __metadata("design:type", Number)
+], ApiLog.prototype, "status_code", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], OtpVerification.prototype, "device_id", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], OtpVerification.prototype, "devicePlatform", void 0);
+], ApiLog.prototype, "customer_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], ApiLog.prototype, "ip_address", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], OtpVerification.prototype, "device_model", void 0);
+    __metadata("design:type", Number)
+], ApiLog.prototype, "duration_ms", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: false }),
-    __metadata("design:type", Date)
-], OtpVerification.prototype, "expires_at", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'is_verified', default: false }),
-    __metadata("design:type", Boolean)
-], OtpVerification.prototype, "isVerified", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'created_at' }),
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], OtpVerification.prototype, "createdAt", void 0);
-exports.OtpVerification = OtpVerification = __decorate([
-    (0, typeorm_1.Entity)('otp_verifications')
-], OtpVerification);
+], ApiLog.prototype, "timestamp", void 0);
+exports.ApiLog = ApiLog = __decorate([
+    (0, typeorm_1.Entity)('api_logs')
+], ApiLog);

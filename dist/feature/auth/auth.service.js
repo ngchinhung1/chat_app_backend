@@ -30,8 +30,8 @@ const otp_verification_entity_1 = require("./entities/otp_verification.entity");
 const user_entity_1 = require("./entities/user.entity");
 const base_response_1 = require("../../utils/base-response");
 const engagement_identifiers_entity_1 = require("../engagement-identifier/entities/engagement_identifiers.entity");
-const country_mapping_1 = require("../../utils/country-mapping");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
+const country_mapping_1 = require("../../utils/country-mapping");
 let AuthService = class AuthService {
     constructor(otpRepo, userRepo, jwtService, engagementRepo, i18n) {
         this.otpRepo = otpRepo;
@@ -67,11 +67,14 @@ let AuthService = class AuthService {
     }
     verifyOtp(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            // ✅ 1. Validate input
             if (!dto.countryCode || !dto.phoneNumber) {
-                return new base_response_1.BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_PHONE_EMPTY'));
+                return new base_response_1.BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_CODE_EMPTY'));
             }
             const countryCode = dto.countryCode.replace(/^\+/, '');
             const now = new Date();
+            // ✅ 2. Find OTP record
             const otpRecord = yield this.otpRepo.findOne({
                 where: {
                     phone_number: dto.phoneNumber,
@@ -85,7 +88,16 @@ let AuthService = class AuthService {
             if (otpRecord.expires_at && otpRecord.expires_at < now) {
                 return new base_response_1.BaseResponse(false, 400, null, this.i18n.getMessage(language, 'OTP_EXPIRED'));
             }
-            // Check if user exists
+            // ✅ 3. Define device/app info (used in both register & login)
+            const deviceInfo = {
+                device_id: dto.deviceId,
+                device_model: dto.deviceModel,
+                devicePlatform: dto.devicePlatform,
+                language: dto.language,
+                app_version: dto.appVersion,
+                is_google_play: dto.isGooglePlay,
+            };
+            // ✅ 4. Check if user exists
             let user = yield this.userRepo.findOne({
                 where: {
                     phone_number: dto.phoneNumber,
@@ -94,58 +106,52 @@ let AuthService = class AuthService {
             });
             let isNewUser = false;
             if (!user) {
+                // ✅ Register new user
                 const customerId = yield this.generateNextCustomerId();
-                user = this.userRepo.create({
-                    country_code: countryCode,
-                    phone_number: dto.phoneNumber,
-                    device_id: dto.deviceId,
-                    language: dto.language,
-                    app_version: dto.appVersion,
-                    is_google_play: dto.isGooglePlay,
-                    devicePlatform: dto.devicePlatform,
-                    customer_id: customerId,
-                });
+                user = this.userRepo.create(Object.assign({ phone_number: dto.phoneNumber, country_code: countryCode, customer_id: customerId, country: (0, country_mapping_1.getCountryNameByCode)(countryCode) }, deviceInfo));
                 yield this.userRepo.save(user);
                 isNewUser = true;
-                // ✅ Update engagement_identifiers if deviceId found
-                const engagement = yield this.engagementRepo.findOne({
-                    where: { deviceId: dto.deviceId },
-                });
+                // ✅ Update engagement_identifiers: isRegistered = true, add customer_id
+                const engagement = yield this.engagementRepo.findOne({ where: { deviceId: dto.deviceId } });
                 if (engagement) {
-                    yield this.engagementRepo.update({ deviceId: dto.deviceId }, { customer_id: customerId, isRegistered: true });
+                    this.engagementRepo.merge(engagement, {
+                        isRegistered: true,
+                        customer_id: customerId,
+                    });
+                    yield this.engagementRepo.save(engagement);
                 }
             }
             else {
-                // Existing user → update
-                user.device_id = dto.deviceId;
-                user.device_model = dto.deviceModel;
-                user.language = dto.language;
-                user.app_version = dto.appVersion;
-                user.is_google_play = dto.isGooglePlay;
-                user.devicePlatform = dto.devicePlatform;
+                // ✅ Existing user: update login device info
+                this.userRepo.merge(user, deviceInfo);
                 yield this.userRepo.save(user);
-                // ✅ Update engagement_identifiers if deviceId found
-                const engagement = yield this.engagementRepo.findOne({
-                    where: { deviceId: dto.deviceId },
-                });
+                // ✅ Update engagement_identifiers: isLogin = true
+                const engagement = yield this.engagementRepo.findOne({ where: { deviceId: dto.deviceId } });
                 if (engagement) {
-                    yield this.engagementRepo.update({ deviceId: dto.deviceId }, { isLogin: true });
+                    this.engagementRepo.merge(engagement, {
+                        isLogin: true,
+                    });
+                    yield this.engagementRepo.save(engagement);
                 }
             }
-            const accessToken = this.jwtService.sign({
-                phoneNumber: dto.phoneNumber,
-                countryCode: countryCode,
-                customerId: user.customer_id,
-            }, { secret: process.env.JWT_SECRET, expiresIn: '7d' });
+            // ✅ 5. Generate JWT token
+            const token = this.jwtService.sign({
+                sub: user.customer_id,
+                phone: user.phone_number,
+            }, {
+                secret: process.env.JWT_SECRET,
+                expiresIn: '7d',
+            });
+            // ✅ 6. Return response
             return new base_response_1.BaseResponse(true, 200, {
-                country_code: countryCode,
-                phone_number: dto.phoneNumber,
-                token: accessToken,
+                country_code: user.country_code,
+                phone_number: user.phone_number,
+                token,
                 customer_id: user.customer_id,
-                full_name: user.full_name || '',
+                name: (_a = user.name) !== null && _a !== void 0 ? _a : '',
                 is_user: isNewUser,
-                country: (0, country_mapping_1.getCountryNameByCode)(countryCode),
-            }, isNewUser ? this.i18n.getMessage(language, 'REGISTER_SUCCESS') : this.i18n.getMessage(language, 'LOGIN_SUCCESS'));
+                country: (0, country_mapping_1.getCountryNameByCode)(user.country_code),
+            }, this.i18n.getMessage(language, isNewUser ? 'REGISTER_SUCCESS' : 'LOGIN_SUCCESS'));
         });
     }
     generateNextCustomerId() {

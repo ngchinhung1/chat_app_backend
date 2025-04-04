@@ -1,13 +1,16 @@
-import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common';
+import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {ConfigModule} from '@nestjs/config';
 import {AuthModule} from './feature/auth/auth.module';
 import {ChatModule} from './feature/chat/chat.module';
 import {EngagementIdentifierModule} from "./feature/engagement-identifier/engagement_identifier.module";
 import {MobileSettingModule} from "./feature/settings/mobile_setting.module";
-import {LanguageMiddleware} from "./middleware/language.middleware";
 import {ProfileModule} from "./feature/profile/profile.module";
 import {StorageModule} from "./shared/storage/storage.module";
+import {LogModule} from "./log/log.module";
+import {ApiLoggerMiddleware} from "./log/api-logger.middleware";
+import {ApiLoggerInterceptor} from "./log/log.interceptor";
+import {I18nModule} from "./i18n/i18n.module";
 
 @Module({
     imports: [
@@ -32,12 +35,15 @@ import {StorageModule} from "./shared/storage/storage.module";
         MobileSettingModule,
         ProfileModule,
         StorageModule,
+        LogModule,
+        I18nModule,
+    ],
+    providers: [
+        ApiLoggerInterceptor,
     ],
 })
-export class AppModule {
+export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer
-            .apply(LanguageMiddleware)
-            .forRoutes({path: '*', method: RequestMethod.ALL});
+        consumer.apply(ApiLoggerMiddleware).forRoutes('*');
     }
 }

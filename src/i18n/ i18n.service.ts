@@ -18,7 +18,7 @@ export class I18nService {
     };
 
     getMessage(lang: string | undefined, key: string): string {
-        const language = lang && this.messages[lang] ? lang : 'en';
-        return this.messages[language][key] || '';
+        const language = lang ?? 'en';
+        return this.messages[language]?.[key] ?? key;
     }
 }

@@ -9,16 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EngagementIdentifier = exports.DevicePlatform = void 0;
+exports.EngagementIdentifier = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("../../auth/entities/user.entity");
-var DevicePlatform;
-(function (DevicePlatform) {
-    DevicePlatform["IOS"] = "ios";
-    DevicePlatform["ANDROID"] = "android";
-    DevicePlatform["WEB"] = "web";
-    DevicePlatform["OTHERS"] = "others";
-})(DevicePlatform || (exports.DevicePlatform = DevicePlatform = {}));
 let EngagementIdentifier = class EngagementIdentifier {
 };
 exports.EngagementIdentifier = EngagementIdentifier;
@@ -39,7 +32,7 @@ __decorate([
     __metadata("design:type", String)
 ], EngagementIdentifier.prototype, "deviceId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: DevicePlatform, default: DevicePlatform.OTHERS }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], EngagementIdentifier.prototype, "devicePlatform", void 0);
 __decorate([

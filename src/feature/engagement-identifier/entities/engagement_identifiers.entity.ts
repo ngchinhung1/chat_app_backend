@@ -9,13 +9,6 @@ import {
 } from 'typeorm';
 import {User} from '../../auth/entities/user.entity';
 
-export enum DevicePlatform {
-    IOS = 'ios',
-    ANDROID = 'android',
-    WEB = 'web',
-    OTHERS = 'others',
-}
-
 @Entity('engagement_identifiers')
 export class EngagementIdentifier {
     @PrimaryGeneratedColumn()
@@ -30,8 +23,8 @@ export class EngagementIdentifier {
     @Column({nullable: true})
     deviceId?: string;
 
-    @Column({type: 'enum', enum: DevicePlatform, default: DevicePlatform.OTHERS})
-    devicePlatform?: DevicePlatform;
+    @Column({nullable: true})
+    devicePlatform?: string;
 
     @Column({nullable: true})
     deviceModel?: string;

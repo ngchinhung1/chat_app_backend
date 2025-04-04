@@ -14,14 +14,15 @@ const auth_module_1 = require("./feature/auth/auth.module");
 const chat_module_1 = require("./feature/chat/chat.module");
 const engagement_identifier_module_1 = require("./feature/engagement-identifier/engagement_identifier.module");
 const mobile_setting_module_1 = require("./feature/settings/mobile_setting.module");
-const language_middleware_1 = require("./middleware/language.middleware");
 const profile_module_1 = require("./feature/profile/profile.module");
 const storage_module_1 = require("./shared/storage/storage.module");
+const log_module_1 = require("./log/log.module");
+const api_logger_middleware_1 = require("./log/api-logger.middleware");
+const log_interceptor_1 = require("./log/log.interceptor");
+const i18n_module_1 = require("./i18n/i18n.module");
 let AppModule = class AppModule {
     configure(consumer) {
-        consumer
-            .apply(language_middleware_1.LanguageMiddleware)
-            .forRoutes({ path: '*', method: common_1.RequestMethod.ALL });
+        consumer.apply(api_logger_middleware_1.ApiLoggerMiddleware).forRoutes('*');
     }
 };
 exports.AppModule = AppModule;
@@ -47,6 +48,11 @@ exports.AppModule = AppModule = __decorate([
             mobile_setting_module_1.MobileSettingModule,
             profile_module_1.ProfileModule,
             storage_module_1.StorageModule,
+            log_module_1.LogModule,
+            i18n_module_1.I18nModule,
+        ],
+        providers: [
+            log_interceptor_1.ApiLoggerInterceptor,
         ],
     })
 ], AppModule);

@@ -60,7 +60,7 @@ let ProfileService = class ProfileService {
                 });
                 yield this.profileRepo.save(profile);
                 // Also update Users table
-                yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name });
+                yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name, profile_image: dto.profile_image });
                 return new base_response_1.BaseResponse(true, 201, {
                     customer_id: profile.customer_id,
                     name: profile.name,
@@ -83,7 +83,7 @@ let ProfileService = class ProfileService {
                 yield this.profileRepo.save(profile);
                 // Update Users table name
                 if (dto.name) {
-                    yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name });
+                    yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name, profile_image: dto.profile_image });
                 }
                 return new base_response_1.BaseResponse(true, 200, {
                     customer_id: profile.customer_id,

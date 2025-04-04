@@ -23,8 +23,9 @@ let I18nService = class I18nService {
         };
     }
     getMessage(lang, key) {
-        const language = lang && this.messages[lang] ? lang : 'en';
-        return this.messages[language][key] || '';
+        var _a, _b;
+        const language = lang !== null && lang !== void 0 ? lang : 'en';
+        return (_b = (_a = this.messages[language]) === null || _a === void 0 ? void 0 : _a[key]) !== null && _b !== void 0 ? _b : key;
     }
 };
 exports.I18nService = I18nService;

@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthRequestOtpDto = void 0;
 const class_validator_1 = require("class-validator");
-const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 class AuthRequestOtpDto {
 }
 exports.AuthRequestOtpDto = AuthRequestOtpDto;
@@ -29,7 +28,7 @@ __decorate([
 ], AuthRequestOtpDto.prototype, "phoneNumber", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(engagement_identifiers_entity_1.DevicePlatform),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], AuthRequestOtpDto.prototype, "devicePlatform", void 0);
 __decorate([

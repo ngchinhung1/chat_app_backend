@@ -3,7 +3,6 @@ import {PassportStrategy} from '@nestjs/passport';
 import {ExtractJwt, Strategy} from 'passport-jwt';
 import * as dotenv from 'dotenv';
 import {ConfigService} from "@nestjs/config";
-import {JwtPayload} from "jsonwebtoken";
 
 dotenv.config();
 
@@ -17,10 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
     }
 
-    async validate(payload: any): Promise<JwtPayload> {
-        return {
-            customer_id: payload.sub,
-            phone: payload.phone,
-        };
+    async validate(payload: any): Promise<any> {
+        return payload;
     }
 }

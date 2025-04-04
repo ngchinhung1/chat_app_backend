@@ -32,7 +32,7 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "profile_image", void 0);
 __decorate([
@@ -41,15 +41,6 @@ __decorate([
 ], User.prototype, "engagementIdentifiers", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], User.prototype, "notificationToken", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], User.prototype, "advertisementId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    (0, typeorm_1.Column)({ type: 'enum', enum: engagement_identifiers_entity_1.DevicePlatform }),
     __metadata("design:type", String)
 ], User.prototype, "devicePlatform", void 0);
 __decorate([
@@ -79,15 +70,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "full_name", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
 ], User.prototype, "country", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], User.prototype, "deviceModel", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'created_at' }),
     (0, typeorm_1.CreateDateColumn)(),

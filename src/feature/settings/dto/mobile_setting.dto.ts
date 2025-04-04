@@ -1,10 +1,9 @@
-import {IsEnum, IsNotEmpty, IsOptional, IsString} from "class-validator";
-import {DevicePlatform} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {IsNotEmpty, IsOptional, IsString} from "class-validator";
 
 export class MobileSettingsDto {
     @IsNotEmpty()
-    @IsEnum(DevicePlatform)
-    devicePlatform?: DevicePlatform;
+    @IsString()
+    devicePlatform?: string;
 
     @IsNotEmpty()
     @IsString()

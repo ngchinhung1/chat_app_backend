@@ -1,5 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsBoolean } from 'class-validator';
-import {DevicePlatform} from "../entities/engagement_identifiers.entity";
+import {IsOptional, IsString, IsBoolean} from 'class-validator';
 
 
 export class CreateEngagementDto {
@@ -16,8 +15,8 @@ export class CreateEngagementDto {
     deviceId?: string;
 
     @IsOptional()
-    @IsEnum(DevicePlatform)
-    devicePlatform?: DevicePlatform;
+    @IsString()
+    devicePlatform?: string;
 
     @IsOptional()
     @IsString()

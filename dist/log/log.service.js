@@ -21,30 +21,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserController = void 0;
+exports.LogService = void 0;
 const common_1 = require("@nestjs/common");
-const user_service_1 = require("../services/user.service");
-const register_request_dto_1 = require("../feature/auth/dto/register_request.dto");
-let UserController = class UserController {
-    constructor(userService) {
-        this.userService = userService;
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const api_log_entity_1 = require("./entities/api_log.entity");
+let LogService = class LogService {
+    constructor(logRepo) {
+        this.logRepo = logRepo;
     }
-    createUser(dto) {
+    logRequest(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { phone_number, country_code } = dto;
-            return this.userService.createUser(phone_number, country_code);
+            const log = this.logRepo.create(data);
+            yield this.logRepo.save(log);
+        });
+    }
+    logError(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const log = this.logRepo.create(Object.assign(Object.assign({}, data), { status_code: data.status_code || 500 }));
+            yield this.logRepo.save(log);
         });
     }
 };
-exports.UserController = UserController;
-__decorate([
-    (0, common_1.Post)('create'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [register_request_dto_1.Register_requestDto]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "createUser", null);
-exports.UserController = UserController = __decorate([
-    (0, common_1.Controller)('user'),
-    __metadata("design:paramtypes", [user_service_1.UserService])
-], UserController);
+exports.LogService = LogService;
+exports.LogService = LogService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(api_log_entity_1.ApiLog)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
+], LogService);
