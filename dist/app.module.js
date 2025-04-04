@@ -5,6 +5,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
@@ -20,6 +29,7 @@ const log_module_1 = require("./log/log.module");
 const api_logger_middleware_1 = require("./log/api-logger.middleware");
 const log_interceptor_1 = require("./log/log.interceptor");
 const i18n_module_1 = require("./i18n/i18n.module");
+const jwt_1 = require("@nestjs/jwt");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(api_logger_middleware_1.ApiLoggerMiddleware).forRoutes('*');
@@ -31,6 +41,15 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
+            }),
+            jwt_1.JwtModule.registerAsync({
+                useFactory: (configService) => __awaiter(void 0, void 0, void 0, function* () {
+                    return ({
+                        secret: configService.get('JWT_SECRET'),
+                        signOptions: { expiresIn: '7d' },
+                    });
+                }),
+                inject: [config_1.ConfigService],
             }),
             typeorm_1.TypeOrmModule.forRoot({
                 type: process.env.DB_TYPE,

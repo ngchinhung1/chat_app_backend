@@ -25,35 +25,91 @@ exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const chat_list_entity_1 = require("./entities/chat_list.entity");
 const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
-const user_entity_1 = require("../auth/entities/user.entity");
 let ChatService = class ChatService {
-    constructor(chatListRepo, chatParticipantRepo, messageRepo, userRepo) {
-        this.chatListRepo = chatListRepo;
+    constructor(chatParticipantRepo, messageRepo) {
         this.chatParticipantRepo = chatParticipantRepo;
         this.messageRepo = messageRepo;
-        this.userRepo = userRepo;
     }
-    getChatListForUser(userCustomerId) {
+    getChatListForUser(customerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.chatParticipantRepo.find({
-                where: { user: { customer_id: userCustomerId } },
-                relations: ['chat', 'chat.messages', 'chat.participants'],
+            const participants = yield this.chatParticipantRepo.find({
+                where: { user_id: customerId, is_deleted: false },
+                relations: ['chat'],
+                order: { joined_at: 'DESC' },
             });
+            const chatList = yield Promise.all(participants.map((p) => __awaiter(this, void 0, void 0, function* () {
+                const chat = p.chat;
+                if (!chat)
+                    return null;
+                // Get last message
+                const lastMessage = yield this.messageRepo.findOne({
+                    where: {
+                        chat: { id: chat.id },
+                    },
+                    order: {
+                        createdAt: 'DESC',
+                    },
+                });
+                // Count unread messages
+                const unreadCount = yield this.messageRepo.count({
+                    where: {
+                        chat: { id: chat.id },
+                        createdAt: (0, typeorm_2.MoreThan)(p.last_read_at || new Date(0)),
+                        sender: { customer_id: (0, typeorm_2.Not)(customerId) },
+                    },
+                });
+                return {
+                    chat_id: chat.id,
+                    chat_type: chat.chat_type,
+                    title: chat.title,
+                    avatar_url: chat.avatar_url,
+                    last_message_id: chat.last_message_id,
+                    last_message: (lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.content) || null,
+                    last_message_at: (lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.createdAt) || null,
+                    unread_count: unreadCount,
+                    joined_at: p.joined_at,
+                    role: p.role,
+                };
+            })));
+            return chatList.filter(Boolean);
+        });
+    }
+    saveMessage(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const message = this.messageRepo.create({
+                chatId: data.chatId,
+                content: data.content,
+                senderCustomerId: data.senderCustomerId,
+            });
+            return yield this.messageRepo.save(message);
+        });
+    }
+    updateLastReadAt(chatId, userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.chatParticipantRepo.update({ chat_id: chatId, user_id: userId }, { last_read_at: new Date() });
+        });
+    }
+    getRecipientDeviceToken(chatId, senderId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const participant = yield this.chatParticipantRepo.findOne({
+                where: {
+                    chat_id: chatId,
+                    user_id: (0, typeorm_2.Not)(senderId),
+                },
+                relations: ['user'],
+            });
+            return ((_a = participant === null || participant === void 0 ? void 0 : participant.user) === null || _a === void 0 ? void 0 : _a.notificationToken) || null;
         });
     }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatList)),
-    __param(1, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipant)),
-    __param(2, (0, typeorm_1.InjectRepository)(message_entity_1.Message)),
-    __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(0, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipantEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
         typeorm_2.Repository])
 ], ChatService);

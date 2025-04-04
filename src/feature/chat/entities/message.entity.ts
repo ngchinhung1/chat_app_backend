@@ -2,66 +2,45 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    ManyToOne,
     CreateDateColumn,
-    UpdateDateColumn,
+    ManyToOne,
     JoinColumn,
 } from 'typeorm';
-import {ChatList} from "./chat_list.entity";
+import {ChatListEntity} from './chat_list.entity';
 import {User} from "../../auth/entities/user.entity";
 
-@Entity('messages')
-export class Message {
-    @PrimaryGeneratedColumn()
+@Entity('message')
+export class MessageEntity {
+    @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    // Chat the message belongs to
-    @ManyToOne(() => ChatList, (chat) => chat.messages, {onDelete: 'CASCADE'})
+    // Foreign key for chat
+    @Column()
+    chatId?: string;
+
+    // Relation to ChatListEntity
+    @ManyToOne(() => ChatListEntity, (chat) => chat.messages, {
+        onDelete: 'CASCADE',
+    })
     @JoinColumn({name: 'chat_id'})
-    chat!: ChatList;
+    chat?: ChatListEntity;
 
-    // User who sent the message
-    @ManyToOne(() => User)
-    @JoinColumn({ name: 'sender_customer_id', referencedColumnName: 'customer_id' })
-    sender!: User;
+    // Foreign key for sender (customer_id)
+    @Column()
+    senderCustomerId?: string;
 
-    // Actual message text content
-    @Column({type: 'text', nullable: true})
+    // Relation to User entity
+    @ManyToOne(() => User, (user) => user.messages, {
+        onDelete: 'CASCADE',
+    })
+    @JoinColumn({name: 'sender_customer_id', referencedColumnName: 'customer_id'})
+    sender?: User;
+
+    // Message text content
+    @Column()
     content?: string;
 
-    // If it's a media message
-    @Column({nullable: true})
-    mediaUrl?: string;
-
-    @Column({nullable: true})
-    mediaType?: 'image' | 'video' | 'audio' | 'file';
-
-    // Reply to another message (threading)
-    @ManyToOne(() => Message, {nullable: true})
-    @JoinColumn({name: 'reply_to'})
-    replyTo?: Message;
-
-    // Reaction (emoji support)
-    @Column({type: 'json', nullable: true})
-    reactions?: {
-        [emoji: string]: string[]; // example: { "❤️": ["user1", "user2"] }
-    };
-
-    // Whether the message has been edited
-    @Column({default: false})
-    isEdited!: boolean;
-
-    // Soft-delete flag
-    @Column({default: false})
-    isDeleted!: boolean;
-
-    // Seen/read status (for optimization — optional)
-    @Column({type: 'json', nullable: true})
-    seenBy?: string[]; // Array of userIds who have seen this message
-
-    @CreateDateColumn({name: 'created_at'})
+    // Timestamp of message creation
+    @CreateDateColumn()
     createdAt!: Date;
-
-    @UpdateDateColumn({name: 'updated_at'})
-    updatedAt?: Date;
 }

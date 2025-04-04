@@ -11,6 +11,7 @@
     "CREATED_SUCCESSFULLY": "Berjaya dicipta",
     "NO_SETTINGS_CONFIGURED": "Tiada tetapan dikonfigurasikan",
     "MOBILE_SETTINGS_FETCHED_SUCCESSFULLY": "Tetapan mudah alih berjaya diambil",
+    "UNEXPECTED_ERROR": "Sesuatu yang tidak dijangka berlaku. Sila cuba lagi.",
     "USER_NOT_FOUND": "Pengguna tidak dijumpai",
     "USER_PROFILE_UPDATED_SUCCESSFULLY": "Profil berjaya dikemaskini",
     "USER_PROFILE_CREATED_SUCCESSFULLY": "Profil berjaya dicipta",

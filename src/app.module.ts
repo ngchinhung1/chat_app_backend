@@ -1,6 +1,6 @@
 import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
 import {TypeOrmModule} from '@nestjs/typeorm';
-import {ConfigModule} from '@nestjs/config';
+import {ConfigModule, ConfigService} from '@nestjs/config';
 import {AuthModule} from './feature/auth/auth.module';
 import {ChatModule} from './feature/chat/chat.module';
 import {EngagementIdentifierModule} from "./feature/engagement-identifier/engagement_identifier.module";
@@ -11,11 +11,20 @@ import {LogModule} from "./log/log.module";
 import {ApiLoggerMiddleware} from "./log/api-logger.middleware";
 import {ApiLoggerInterceptor} from "./log/log.interceptor";
 import {I18nModule} from "./i18n/i18n.module";
+import {JwtModule} from "@nestjs/jwt";
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+        }),
+
+        JwtModule.registerAsync({
+            useFactory: async (configService: ConfigService) => ({
+                secret: configService.get<string>('JWT_SECRET'),
+                signOptions: {expiresIn: '7d'},
+            }),
+            inject: [ConfigService],
         }),
 
         TypeOrmModule.forRoot({

@@ -1,38 +1,41 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    ManyToOne,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn, JoinColumn,
-} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn} from 'typeorm';
+import {ChatListEntity} from './chat_list.entity';
 import {User} from "../../auth/entities/user.entity";
-import {ChatList} from "./chat_list.entity";
 
-@Entity('chat_participants')
-export class ChatParticipant {
-    @PrimaryGeneratedColumn()
+@Entity('chat_participant')
+export class ChatParticipantEntity {
+    @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @ManyToOne(() => ChatList, (chat) => chat.participants)
-    chat?: ChatList;
+    @Column()
+    chat_id?: string;
 
-    @ManyToOne(() => User)
-    @JoinColumn({ name: 'customer_id', referencedColumnName: 'customer_id' })
-    user!: User;
+    @Column()
+    user_id?: string;
+
+    @Column({type: 'enum', enum: ['admin', 'member'], default: 'member'})
+    role?: 'admin' | 'member';
 
     @Column({default: false})
-    isAdmin!: boolean;
+    is_muted?: boolean;
 
     @Column({default: false})
-    isMuted!: boolean;
+    is_archived?: boolean;
+
+    @Column({default: false})
+    is_deleted?: boolean;
 
     @Column({type: 'timestamp', nullable: true})
-    lastSeenAt?: Date;
+    last_read_at!: Date;
 
     @CreateDateColumn()
-    joinedAt!: Date;
+    joined_at!: Date;
 
-    @UpdateDateColumn()
-    updatedAt?: Date;
+    @ManyToOne(() => ChatListEntity)
+    chat?: ChatListEntity;
+
+    @ManyToOne(() => User, (user) => user.chatParticipants)
+    @JoinColumn({name: 'user_id', referencedColumnName: 'customer_id'})
+    user?: User;
+
 }

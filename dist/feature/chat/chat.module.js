@@ -7,25 +7,26 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatModule = void 0;
+const jwt_1 = require("@nestjs/jwt");
+const config_1 = require("@nestjs/config");
 const common_1 = require("@nestjs/common");
 const chat_gateway_1 = require("./chat.gateway");
+const fcm_module_1 = require("../../fcm/fcm.module");
 const chat_service_1 = require("./chat.service");
 const typeorm_1 = require("@nestjs/typeorm");
-const chat_list_entity_1 = require("./entities/chat_list.entity");
 const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
-const user_entity_1 = require("../auth/entities/user.entity");
-const auth_module_1 = require("../auth/auth.module");
-const jwtWsAuth_guard_1 = require("../../config/guards/jwtWsAuth.guard");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([chat_list_entity_1.ChatList, chat_participant_entity_1.ChatParticipant, message_entity_1.Message, user_entity_1.User]),
-            auth_module_1.AuthModule,
+            typeorm_1.TypeOrmModule.forFeature([chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity]),
+            jwt_1.JwtModule.register({}),
+            config_1.ConfigModule,
+            fcm_module_1.FcmModule,
         ],
-        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService, jwtWsAuth_guard_1.JwtWsAuthGuard],
+        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService],
     })
 ], ChatModule);

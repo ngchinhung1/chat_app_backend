@@ -9,86 +9,56 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatList = void 0;
+exports.ChatListEntity = void 0;
 const typeorm_1 = require("typeorm");
 const message_entity_1 = require("./message.entity");
-const chat_participant_entity_1 = require("./chat_participant.entity");
-let ChatList = class ChatList {
+let ChatListEntity = class ChatListEntity {
 };
-exports.ChatList = ChatList;
+exports.ChatListEntity = ChatListEntity;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
-], ChatList.prototype, "chatId", void 0);
+], ChatListEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ default: 'individual' }) // or 'group'
-    ,
+    (0, typeorm_1.Column)({ type: 'enum', enum: ['private', 'group'], default: 'private' }),
     __metadata("design:type", String)
-], ChatList.prototype, "type", void 0);
+], ChatListEntity.prototype, "chat_type", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], ChatList.prototype, "groupName", void 0);
+], ChatListEntity.prototype, "title", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], ChatList.prototype, "imageUrl", void 0);
+], ChatListEntity.prototype, "avatar_url", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], ChatList.prototype, "description", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
-], ChatList.prototype, "createdByCustomerId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], ChatList.prototype, "isPrivate", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], ChatList.prototype, "isArchived", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], ChatList.prototype, "isMuted", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], ChatList.prototype, "isPinned", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: false }),
-    __metadata("design:type", Boolean)
-], ChatList.prototype, "isSystemChat", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
-    __metadata("design:type", Object)
-], ChatList.prototype, "metadata", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
-    __metadata("design:type", Date)
-], ChatList.prototype, "lastActivityAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)(),
-    __metadata("design:type", Date)
-], ChatList.prototype, "lastMessageTime", void 0);
+], ChatListEntity.prototype, "created_by", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], ChatList.prototype, "createdAt", void 0);
+], ChatListEntity.prototype, "created_at", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
-], ChatList.prototype, "updatedAt", void 0);
+], ChatListEntity.prototype, "updated_at", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipant, (cp) => cp.chat),
-    __metadata("design:type", Array)
-], ChatList.prototype, "participants", void 0);
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], ChatListEntity.prototype, "last_message_id", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => message_entity_1.Message, (m) => m.chat),
+    (0, typeorm_1.Column)({ default: true }),
+    __metadata("design:type", Boolean)
+], ChatListEntity.prototype, "is_active", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], ChatListEntity.prototype, "extra_metadata", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.chat),
     __metadata("design:type", Array)
-], ChatList.prototype, "messages", void 0);
-exports.ChatList = ChatList = __decorate([
+], ChatListEntity.prototype, "messages", void 0);
+exports.ChatListEntity = ChatListEntity = __decorate([
     (0, typeorm_1.Entity)('chat_list')
-], ChatList);
+], ChatListEntity);

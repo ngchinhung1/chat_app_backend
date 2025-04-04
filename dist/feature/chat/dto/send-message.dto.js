@@ -9,33 +9,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MobileSettingsDto = void 0;
+exports.SendMessageDto = void 0;
 const class_validator_1 = require("class-validator");
-class MobileSettingsDto {
+class SendMessageDto {
 }
-exports.MobileSettingsDto = MobileSettingsDto;
+exports.SendMessageDto = SendMessageDto;
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], MobileSettingsDto.prototype, "devicePlatform", void 0);
+], SendMessageDto.prototype, "chatId", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], MobileSettingsDto.prototype, "notificationToken", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], MobileSettingsDto.prototype, "advertisementId", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], MobileSettingsDto.prototype, "deviceId", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], MobileSettingsDto.prototype, "customer_id", void 0);
+], SendMessageDto.prototype, "content", void 0);

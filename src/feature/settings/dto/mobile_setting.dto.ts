@@ -16,4 +16,8 @@ export class MobileSettingsDto {
     @IsOptional()
     @IsString()
     deviceId?: string;
+
+    @IsNotEmpty()
+    @IsString()
+    customer_id!: string;
 }

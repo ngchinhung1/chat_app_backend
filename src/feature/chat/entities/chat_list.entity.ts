@@ -1,67 +1,38 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    OneToMany,
-    CreateDateColumn,
-    UpdateDateColumn,
-} from 'typeorm';
-import {Message} from './message.entity';
-import {ChatParticipant} from './chat_participant.entity';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
+import {MessageEntity} from "./message.entity";
 
 @Entity('chat_list')
-export class ChatList {
+export class ChatListEntity {
     @PrimaryGeneratedColumn('uuid')
-    chatId!: string;
+    id!: string;
 
-    @Column({default: 'individual'}) // or 'group'
-    type!: 'individual' | 'group';
-
-    @Column({nullable: true})
-    groupName?: string;
+    @Column({type: 'enum', enum: ['private', 'group'], default: 'private'})
+    chat_type?: 'private' | 'group';
 
     @Column({nullable: true})
-    imageUrl?: string;
+    title?: string;
 
     @Column({nullable: true})
-    description?: string; // description or group bio
+    avatar_url?: string;
 
-    @Column({nullable: true})
-    createdByCustomerId?: string; // user ID of creator
-
-    @Column({default: false})
-    isPrivate!: boolean; // if true, not searchable
-
-    @Column({default: false})
-    isArchived!: boolean; // for hiding inactive chats
-
-    @Column({default: false})
-    isMuted!: boolean; // muted group notifications
-
-    @Column({default: false})
-    isPinned!: boolean; // pin to top of chat list
-
-    @Column({default: false})
-    isSystemChat!: boolean; // system-level, e.g., support
-
-    @Column({type: 'json', nullable: true})
-    metadata?: Record<string, any>; // additional flags or configs (e.g. themeColor)
-
-    @Column({type: 'timestamp', nullable: true})
-    lastActivityAt?: Date; // last activity from anyone in the chat
-
-    @UpdateDateColumn()
-    lastMessageTime!: Date; // updated when message is sent
+    @Column()
+    created_by?: string;
 
     @CreateDateColumn()
-    createdAt!: Date;
+    created_at!: Date;
 
     @UpdateDateColumn()
-    updatedAt!: Date;
+    updated_at!: Date;
 
-    @OneToMany(() => ChatParticipant, (cp) => cp.chat)
-    participants!: ChatParticipant[];
+    @Column({nullable: true})
+    last_message_id?: string;
 
-    @OneToMany(() => Message, (m) => m.chat)
-    messages?: Message[];
+    @Column({default: true})
+    is_active?: boolean;
+
+    @Column({type: 'json', nullable: true})
+    extra_metadata?: Record<string, any>;
+
+    @OneToMany(() => MessageEntity, (message) => message.chat)
+    messages?: MessageEntity[];
 }

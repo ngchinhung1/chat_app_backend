@@ -23,47 +23,44 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MobileSettingController = void 0;
 const common_1 = require("@nestjs/common");
-const engagement_identifier_service_1 = require("../engagement-identifier/engagement_identifier.service");
 const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
 const mobile_setting_dto_1 = require("./dto/mobile_setting.dto");
 const base_response_1 = require("../../utils/base-response");
 const mobile_setting_service_1 = require("./mobile_setting.service");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
+const language_util_1 = require("../../utils/language.util");
 let MobileSettingController = class MobileSettingController {
-    constructor(settingService, engagementService, i18n) {
+    constructor(settingService, i18n) {
         this.settingService = settingService;
-        this.engagementService = engagementService;
         this.i18n = i18n;
     }
-    getSettings(body, req) {
+    upsertSettings(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const user = req.user;
-            const language = Array.isArray(req.headers['language'])
-                ? req.headers['language'][0]
-                : req.headers['language'] || 'en';
-            // ✅ Check & Update engagement_identifier
-            const engagement = yield this.engagementService.findByDeviceId(body.deviceId);
-            if (engagement) {
-                yield this.engagementService.updateDeviceInfo(body, user.customer_id);
-            }
-            // ✅ Fetch settings
-            const settings = yield this.settingService.getSettingByPlatform(body.devicePlatform);
-            if (!settings) {
+            const language = (0, language_util_1.getLanguageFromHeaders)(req);
+            try {
+                const data = yield this.settingService.upsertAndReturnUserSettings(dto);
+                if (!data) {
+                    // default fallback response
+                    return new base_response_1.BaseResponse(true, 200, {
+                        link: null,
+                        devicePlatform: null,
+                        mobile_version: null,
+                        major_update: false,
+                        is_maintenance: false,
+                    }, this.i18n.getMessage(language, 'NO_SETTINGS_CONFIGURED'));
+                }
                 return new base_response_1.BaseResponse(true, 200, {
-                    link: null,
-                    devicePlatform: null,
-                    mobile_version: null,
-                    major_update: false,
-                    is_maintenance: false,
-                }, this.i18n.getMessage(language, 'NO_SETTINGS_CONFIGURED'));
+                    link: data.link,
+                    devicePlatform: data.devicePlatform,
+                    mobile_version: data.mobileVersion,
+                    major_update: data.majorUpdate,
+                    is_maintenance: data.isMaintenance,
+                }, this.i18n.getMessage(language, 'MOBILE_SETTINGS_FETCHED_SUCCESSFULLY'));
             }
-            return new base_response_1.BaseResponse(true, 200, {
-                link: settings.link,
-                devicePlatform: settings.devicePlatform,
-                mobile_version: settings.mobileVersion,
-                major_update: settings.majorUpdate,
-                is_maintenance: settings.isMaintenance,
-            }, this.i18n.getMessage(language, 'MOBILE_SETTINGS_FETCHED_SUCCESSFULLY'));
+            catch (error) {
+                console.error('Mobile settings error:', error);
+                return new base_response_1.BaseResponse(false, 500, null, this.i18n.getMessage(language, 'UNEXPECTED_ERROR'));
+            }
         });
     }
 };
@@ -74,12 +71,11 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [mobile_setting_dto_1.MobileSettingsDto, Object]),
+    __metadata("design:paramtypes", [mobile_setting_dto_1.MobileSettingsDto, Request]),
     __metadata("design:returntype", Promise)
-], MobileSettingController.prototype, "getSettings", null);
+], MobileSettingController.prototype, "upsertSettings", null);
 exports.MobileSettingController = MobileSettingController = __decorate([
     (0, common_1.Controller)('mobile-settings'),
     __metadata("design:paramtypes", [mobile_setting_service_1.MobileSettingsService,
-        engagement_identifier_service_1.EngagementIdentifierService,
         _i18n_service_1.I18nService])
 ], MobileSettingController);

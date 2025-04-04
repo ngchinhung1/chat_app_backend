@@ -1,5 +1,7 @@
 import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
 import {EngagementIdentifier} from "../../engagement-identifier/entities/engagement_identifiers.entity";
+import {MessageEntity} from "../../chat/entities/message.entity";
+import {ChatParticipantEntity} from "../../chat/entities/chat_participant.entity";
 
 @Entity('users')
 export class User {
@@ -53,7 +55,7 @@ export class User {
     updated_at!: Date;
 
     @Column({nullable: true})
-    device_id?: string;
+    deviceId?: string;
 
     @Column({nullable: true})
     device_model?: string;
@@ -66,4 +68,17 @@ export class User {
 
     @Column({nullable: true})
     is_google_play?: boolean;
+
+    @OneToMany(() => MessageEntity, (message) => message.sender)
+    messages?: MessageEntity[];
+
+    @OneToMany(() => ChatParticipantEntity, (participant) => participant.user)
+    chatParticipants?: ChatParticipantEntity[];
+
+    @Column({nullable: true})
+    notificationToken?: string;
+
+    @Column({nullable: true})
+    advertisementId?: string;
+
 }

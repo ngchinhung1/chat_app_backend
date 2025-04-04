@@ -1,7 +1,7 @@
-import {Injectable, CanActivate, ExecutionContext} from '@nestjs/common';
+import {CanActivate, ExecutionContext, Injectable, UnauthorizedException} from '@nestjs/common';
 import {JwtService} from '@nestjs/jwt';
 import {Socket} from 'socket.io';
-import {JwtPayload} from 'jsonwebtoken';
+import {Reflector} from '@nestjs/core';
 import {ConfigService} from '@nestjs/config';
 
 @Injectable()
@@ -9,28 +9,28 @@ export class JwtWsAuthGuard implements CanActivate {
     constructor(
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly reflector: Reflector,
     ) {
     }
 
-    canActivate(context: ExecutionContext): boolean {
-        const client = context.switchToWs().getClient<Socket & { user?: JwtPayload }>();
-        const token = client.handshake.auth?.token;
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const client: Socket = context.switchToWs().getClient<Socket>();
+        const token = client.handshake.query.token as string;
 
         if (!token) {
-            return false;
+            throw new UnauthorizedException('Missing token');
         }
 
         try {
-            const decoded = this.jwtService.verify(token, {
+            const payload = await this.jwtService.verifyAsync(token, {
                 secret: this.configService.get<string>('JWT_SECRET'),
             });
-            client.user = {
-                customer_id: decoded.sub,
-                phone: decoded.phoneNumber,
-            };
+
+            client.data = {user: payload}; // attach user data for later use
             return true;
-        } catch (err) {
-            return false;
+        } catch (err: any) {
+            console.error('JWT verification failed:', err.message);
+            throw new UnauthorizedException('Invalid or expired token');
         }
     }
 }

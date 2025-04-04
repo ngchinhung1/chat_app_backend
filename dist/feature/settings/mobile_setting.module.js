@@ -14,13 +14,14 @@ const engagement_identifier_module_1 = require("../engagement-identifier/engagem
 const mobile_setting_controller_1 = require("./mobile_setting.controller");
 const mobile_setting_entity_1 = require("./entities/mobile_setting.entity");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
+const user_entity_1 = require("../auth/entities/user.entity");
 let MobileSettingModule = class MobileSettingModule {
 };
 exports.MobileSettingModule = MobileSettingModule;
 exports.MobileSettingModule = MobileSettingModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([mobile_setting_entity_1.MobileSetting]),
+            typeorm_1.TypeOrmModule.forFeature([mobile_setting_entity_1.MobileSetting, user_entity_1.User]),
             engagement_identifier_module_1.EngagementIdentifierModule,
         ],
         controllers: [mobile_setting_controller_1.MobileSettingController],

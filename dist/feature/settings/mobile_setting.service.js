@@ -26,15 +26,39 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const mobile_setting_entity_1 = require("./entities/mobile_setting.entity");
+const user_entity_1 = require("../auth/entities/user.entity");
 let MobileSettingsService = class MobileSettingsService {
-    constructor(settingRepo) {
+    constructor(settingRepo, userRepo) {
         this.settingRepo = settingRepo;
+        this.userRepo = userRepo;
     }
-    getSettingByPlatform(devicePlatform) {
+    upsertAndReturnUserSettings(dto) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!devicePlatform)
-                return null;
-            return yield this.settingRepo.findOne({ where: { devicePlatform } });
+            const { customer_id, deviceId, devicePlatform, advertisementId, notificationToken, } = dto;
+            // 1. Update user
+            yield this.userRepo.update({ customer_id }, {
+                deviceId,
+                devicePlatform,
+                advertisementId,
+                notificationToken,
+            });
+            // 2. Load base mobile setting (based on platform)
+            const setting = yield this.settingRepo.findOne({
+                where: { devicePlatform },
+                select: [
+                    'link',
+                    'mobileVersion',
+                    'majorUpdate',
+                    'isMaintenance',
+                ],
+            });
+            return setting || {
+                link: '',
+                devicePlatform,
+                mobile_version: '',
+                major_update: false,
+                is_maintenance: false,
+            };
         });
     }
 };
@@ -42,5 +66,7 @@ exports.MobileSettingsService = MobileSettingsService;
 exports.MobileSettingsService = MobileSettingsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(mobile_setting_entity_1.MobileSetting)),
-    __metadata("design:paramtypes", [typeorm_2.Repository])
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository])
 ], MobileSettingsService);
