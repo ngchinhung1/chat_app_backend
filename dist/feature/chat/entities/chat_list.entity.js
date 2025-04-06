@@ -20,6 +20,14 @@ __decorate([
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "id", void 0);
 __decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ChatListEntity.prototype, "user1_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ChatListEntity.prototype, "user2_id", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: ['private', 'group'], default: 'private' }),
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "chat_type", void 0);
@@ -36,7 +44,7 @@ __decorate([
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "created_by", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.Column)({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }),
     __metadata("design:type", Date)
 ], ChatListEntity.prototype, "created_at", void 0);
 __decorate([

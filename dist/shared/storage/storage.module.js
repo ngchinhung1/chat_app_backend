@@ -25,7 +25,7 @@ exports.StorageModule = StorageModule = __decorate([
                 provide: 'StorageService',
                 inject: [config_1.ConfigService, local_storage_service_1.LocalStorageService, s3_storage_service_1.S3StorageService],
                 useFactory: (config, localStorageService, s3StorageService) => {
-                    return config.get('STORAGE_DRIVER') === 's3'
+                    return process.env.USE_S3 === 'true'
                         ? s3StorageService
                         : localStorageService;
                 },

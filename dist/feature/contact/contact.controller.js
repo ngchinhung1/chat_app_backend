@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -18,40 +21,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.S3StorageService = void 0;
+exports.ContactController = void 0;
 const common_1 = require("@nestjs/common");
-const client_s3_1 = require("@aws-sdk/client-s3");
-const config_1 = require("@nestjs/config");
-let S3StorageService = class S3StorageService {
-    constructor(configService) {
-        this.configService = configService;
-        this.s3Client = new client_s3_1.S3Client({
-            region: this.configService.get('S3_REGION'),
-            credentials: {
-                accessKeyId: this.configService.get('S3_ACCESS_KEY'),
-                secretAccessKey: this.configService.get('S3_SECRET_KEY'),
-            },
-        });
-        this.bucketName = this.configService.get('AWS_BUCKET_NAME') || 'default-bucket';
+const contact_service_1 = require("./contact.service");
+const create_contact_dto_1 = require("./dto/create-contact.dto");
+const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
+const base_response_1 = require("../../utils/base-response");
+let ContactController = class ContactController {
+    constructor(contactService) {
+        this.contactService = contactService;
     }
-    upload(file) {
+    addContact(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const fileName = `profile/${Date.now()}-${file.originalname}`;
-            yield this.s3Client.send(new client_s3_1.PutObjectCommand({
-                Bucket: this.bucketName,
-                Key: fileName,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-            }));
-            // Return Public URL (Optional)
-            const region = this.configService.get('S3_REGION');
-            const url = `https://${this.bucketName}.s3.${region}.amazonaws.com/${fileName}`;
-            return url;
+            const customerId = req.user.customer_id;
+            const data = yield this.contactService.addContact(dto, customerId);
+            return new base_response_1.BaseResponse(true, 201, data, 'Contact added successfully');
         });
     }
 };
-exports.S3StorageService = S3StorageService;
-exports.S3StorageService = S3StorageService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService])
-], S3StorageService);
+exports.ContactController = ContactController;
+__decorate([
+    (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('add'),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_contact_dto_1.CreateContactDto, Object]),
+    __metadata("design:returntype", Promise)
+], ContactController.prototype, "addContact", null);
+exports.ContactController = ContactController = __decorate([
+    (0, common_1.Controller)('contact'),
+    __metadata("design:paramtypes", [contact_service_1.ContactService])
+], ContactController);

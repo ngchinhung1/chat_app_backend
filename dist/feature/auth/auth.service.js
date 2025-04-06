@@ -67,7 +67,7 @@ let AuthService = class AuthService {
     }
     verifyOtp(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
+            var _a, _b;
             // ✅ 1. Validate input
             if (!dto.countryCode || !dto.phoneNumber) {
                 return new base_response_1.BaseResponse(false, 400, null, this.i18n.getMessage(language, 'COUNTRY_CODE_EMPTY'));
@@ -148,7 +148,8 @@ let AuthService = class AuthService {
                 phone_number: user.phone_number,
                 token,
                 customer_id: user.customer_id,
-                name: (_a = user.name) !== null && _a !== void 0 ? _a : '',
+                first_name: (_a = user.first_name) !== null && _a !== void 0 ? _a : '',
+                last_name: (_b = user.last_name) !== null && _b !== void 0 ? _b : '',
                 is_user: isNewUser,
                 country: (0, country_mapping_1.getCountryNameByCode)(user.country_code),
             }, this.i18n.getMessage(language, isNewUser ? 'REGISTER_SUCCESS' : 'LOGIN_SUCCESS'));

@@ -6,6 +6,12 @@ export class ChatListEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
+    @Column()
+    user1_id?: string;
+
+    @Column()
+    user2_id?: string;
+
     @Column({type: 'enum', enum: ['private', 'group'], default: 'private'})
     chat_type?: 'private' | 'group';
 
@@ -18,7 +24,7 @@ export class ChatListEntity {
     @Column()
     created_by?: string;
 
-    @CreateDateColumn()
+    @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
     created_at!: Date;
 
     @UpdateDateColumn()

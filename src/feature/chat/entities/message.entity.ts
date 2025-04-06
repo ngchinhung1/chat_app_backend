@@ -16,7 +16,7 @@ export class MessageEntity {
 
     // Foreign key for chat
     @Column()
-    chatId?: string;
+    chat_id?: string;
 
     // Relation to ChatListEntity
     @ManyToOne(() => ChatListEntity, (chat) => chat.messages, {
@@ -37,10 +37,20 @@ export class MessageEntity {
     sender?: User;
 
     // Message text content
-    @Column()
+    @Column({type: 'text', nullable: true})
     content?: string;
 
     // Timestamp of message creation
     @CreateDateColumn()
     createdAt!: Date;
+
+    @Column({nullable: true})
+    file_type?: 'text' | 'image' | 'video' | 'file';
+
+    @Column({nullable: true})
+    attachment_url?: string;
+
+    @Column({nullable: true})
+    voice_url?: string;
+
 }

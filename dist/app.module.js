@@ -30,6 +30,7 @@ const api_logger_middleware_1 = require("./log/api-logger.middleware");
 const log_interceptor_1 = require("./log/log.interceptor");
 const i18n_module_1 = require("./i18n/i18n.module");
 const jwt_1 = require("@nestjs/jwt");
+const voice_upload_module_1 = require("./feature/chat/voice-upload.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(api_logger_middleware_1.ApiLoggerMiddleware).forRoutes('*');
@@ -69,6 +70,7 @@ exports.AppModule = AppModule = __decorate([
             storage_module_1.StorageModule,
             log_module_1.LogModule,
             i18n_module_1.I18nModule,
+            voice_upload_module_1.VoiceUploadModule,
         ],
         providers: [
             log_interceptor_1.ApiLoggerInterceptor,

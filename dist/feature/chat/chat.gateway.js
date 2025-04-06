@@ -31,15 +31,35 @@ let ChatGateway = class ChatGateway {
     constructor(chatService, fcmService) {
         this.chatService = chatService;
         this.fcmService = fcmService;
+        this.connectedClients = new Map();
     }
+    // 🔌 Track connections
     handleConnection(client) {
         const user = client.data.user;
-        console.log('Socket connected:', (user === null || user === void 0 ? void 0 : user.phone_number) || (user === null || user === void 0 ? void 0 : user.customer_id));
+        if (user === null || user === void 0 ? void 0 : user.customer_id) {
+            this.connectedClients.set(user.customer_id, client);
+        }
     }
+    // 🔌 Track disconnections
     handleDisconnect(client) {
         const user = client.data.user;
-        console.log('Socket disconnected:', (user === null || user === void 0 ? void 0 : user.phone_number) || (user === null || user === void 0 ? void 0 : user.customer_id));
+        if (user === null || user === void 0 ? void 0 : user.customer_id) {
+            this.connectedClients.delete(user.customer_id);
+        }
     }
+    // 🧠 Helper to get user's socket by their ID
+    getSocketByUserId(userId) {
+        return this.connectedClients.get(userId);
+    }
+    // handleConnection(client: Socket) {
+    //     const user = client.data.user;
+    //     console.log('Socket connected:', user?.phone_number || user?.customer_id);
+    // }
+    //
+    // handleDisconnect(client: Socket) {
+    //     const user = client.data.user;
+    //     console.log('Socket disconnected:', user?.phone_number || user?.customer_id);
+    // }
     handleChatList(client) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = client.data.user;
@@ -49,45 +69,100 @@ let ChatGateway = class ChatGateway {
     }
     handleSendMessage(data, client) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
+            var _a, _b;
             const sender = client.data.user;
             const newMessage = yield this.chatService.saveMessage({
                 chatId: data.chatId,
                 content: data.content,
                 senderCustomerId: sender.customer_id,
             });
-            // Emit to other users in the chat room
-            this.server.to(data.chatId).emit('new_message', {
+            // Emit the new message to all in the room
+            (_a = this.server) === null || _a === void 0 ? void 0 : _a.to(data.chatId).emit('new_message', {
                 chatId: data.chatId,
                 message: {
                     id: newMessage.id,
                     content: newMessage.content,
+                    voiceUrl: newMessage.voice_url || null,
                     senderCustomerId: sender.customer_id,
                     createdAt: newMessage.createdAt,
                 },
             });
-            // Check if recipient is online (optional logic)
-            const recipientDeviceToken = yield this.chatService.getRecipientDeviceToken(data.chatId, sender.customer_id); // write this service logic
+            // ✅ Emit chat_list_update to sender (unreadCount = 0)
+            client.emit('chat_list_update', {
+                chatId: data.chatId,
+                lastMessage: newMessage.content,
+                unreadCount: 0,
+                updatedAt: new Date().toISOString(),
+            });
+            // ✅ Get recipient socket(s)
             const room = this.server.sockets.adapter.rooms.get(data.chatId);
-            const isRecipientOnline = ((_a = room === null || room === void 0 ? void 0 : room.size) !== null && _a !== void 0 ? _a : 0) > 1;
-            if (!isRecipientOnline && recipientDeviceToken) {
-                yield this.fcmService.send({
-                    token: recipientDeviceToken,
-                    notification: {
-                        title: `New message`,
-                        body: newMessage.content,
-                    },
-                    data: {
-                        chatId: data.chatId,
-                        type: 'chat',
-                    },
+            const isRecipientOnline = ((_b = room === null || room === void 0 ? void 0 : room.size) !== null && _b !== void 0 ? _b : 0) > 1;
+            // Get recipient ID and socket ID
+            const recipientId = yield this.chatService.getRecipientId(data.chatId, sender.customer_id);
+            const recipientSocket = this.getSocketByUserId(recipientId);
+            // ✅ Emit chat_list_update to recipient if online
+            if (recipientSocket) {
+                recipientSocket.emit('chat_list_update', {
+                    chatId: data.chatId,
+                    lastMessage: newMessage.content,
+                    unreadCount: 1,
+                    updatedAt: new Date().toISOString(),
                 });
+            }
+            // ✅ If recipient is offline, send FCM push
+            if (!isRecipientOnline) {
+                const recipientDeviceToken = yield this.chatService.getRecipientDeviceToken(data.chatId, sender.customer_id);
+                if (recipientDeviceToken) {
+                    yield this.fcmService.send({
+                        token: recipientDeviceToken,
+                        notification: {
+                            title: `New message`,
+                            body: newMessage.content,
+                        },
+                        data: {
+                            chatId: data.chatId,
+                            type: 'chat',
+                        },
+                    });
+                }
             }
         });
     }
-    handleJoinRoom(chatId, client) {
-        client.join(chatId);
-        console.log(`User ${client.data.user.customer_id} joined room ${chatId}`);
+    handleJoinRoom(data, client) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { chatId, type } = data;
+            const user = client.data.user;
+            if (!chatId || !type) {
+                return client.emit('error', {
+                    message: 'chatId and type are required.',
+                });
+            }
+            // Get rooms joined by the client
+            const rooms = [...client.rooms];
+            // Check if already joined
+            if (rooms.includes(chatId)) {
+                return client.emit('already_joined', {
+                    chatId,
+                    type,
+                    message: `Already joined ${type} chat room.`,
+                });
+            }
+            // Join the chat room
+            client.join(chatId);
+            // Broadcast or confirm
+            client.emit('joined_room', {
+                chatId,
+                type,
+                message: `Successfully joined ${type} chat room.`,
+            });
+            // Optional: Notify other participants if it's a group
+            if (type === 'group') {
+                client.to(chatId).emit('user_joined', {
+                    chatId,
+                    userId: user.customer_id,
+                });
+            }
+        });
     }
     handleLeaveRoom(chatId, client) {
         client.leave(chatId);
@@ -100,15 +175,30 @@ let ChatGateway = class ChatGateway {
             isTyping: data.isTyping,
         });
     }
-    handleReadMessage(chatId, client) {
+    handleReadMessage(data, client) {
         return __awaiter(this, void 0, void 0, function* () {
             const user = client.data.user;
-            // ✅ Update last read timestamp
-            yield this.chatService.updateLastReadAt(chatId, user.customer_id);
-            // 🟡 Optional: notify other users
-            this.server.to(chatId).emit('message_read', {
-                chatId,
-                readerCustomerId: user.customer_id,
+            // ✅ Step 1: Update last_read_at
+            yield this.chatService.updateLastReadAt(data.chatId, user.customer_id);
+            // ✅ Step 2: Notify other participants (optional)
+            const recipientId = yield this.chatService.getRecipientId(data.chatId, user.customer_id);
+            const recipientSocket = this.getSocketByUserId(recipientId);
+            if (recipientSocket) {
+                recipientSocket.emit('message_read', {
+                    chatId: data.chatId,
+                    userId: user.customer_id,
+                    readAt: new Date().toISOString(),
+                });
+            }
+        });
+    }
+    handleSearchMessages(data, client) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const messages = yield this.chatService.searchMessages(data.chatId, data.keyword);
+            client.emit('search_messages_result', {
+                chatId: data.chatId,
+                keyword: data.keyword,
+                results: messages,
             });
         });
     }
@@ -138,8 +228,8 @@ __decorate([
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, socket_io_1.Socket]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleJoinRoom", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('leave_room'),
@@ -162,9 +252,17 @@ __decorate([
     __param(0, (0, websockets_1.MessageBody)()),
     __param(1, (0, websockets_1.ConnectedSocket)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleReadMessage", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('search_messages'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleSearchMessages", null);
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({ cors: true }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,

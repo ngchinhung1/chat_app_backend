@@ -9,21 +9,39 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SendMessageDto = void 0;
-const class_validator_1 = require("class-validator");
-class SendMessageDto {
-}
-exports.SendMessageDto = SendMessageDto;
+exports.Contact = void 0;
+const typeorm_1 = require("typeorm");
+let Contact = class Contact {
+};
+exports.Contact = Contact;
 __decorate([
-    (0, class_validator_1.IsString)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "chatId", void 0);
+], Contact.prototype, "id", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "content", void 0);
+], Contact.prototype, "customer_id", void 0);
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "voiceUrl", void 0);
+], Contact.prototype, "first_name", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Contact.prototype, "last_name", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Contact.prototype, "phone_number", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Contact.prototype, "country_code", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], Contact.prototype, "created_at", void 0);
+exports.Contact = Contact = __decorate([
+    (0, typeorm_1.Entity)('contacts')
+], Contact);

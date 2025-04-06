@@ -32,14 +32,16 @@ const local_storage_service_1 = require("../../shared/storage/local-storage.serv
 const s3_storage_service_1 = require("../../shared/storage/s3-storage.service");
 const uploaded_files_entity_1 = require("../../shared/entities/uploaded_files.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
+const storage_service_1 = require("../../shared/storage/storage.service");
 let ProfileService = class ProfileService {
-    constructor(profileRepo, i18n, localStorageService, s3StorageService, uploadedFileRepo, userRepo) {
+    constructor(profileRepo, i18n, localStorageService, s3StorageService, uploadedFileRepo, userRepo, storageService) {
         this.profileRepo = profileRepo;
         this.i18n = i18n;
         this.localStorageService = localStorageService;
         this.s3StorageService = s3StorageService;
         this.uploadedFileRepo = uploadedFileRepo;
         this.userRepo = userRepo;
+        this.storageService = storageService;
     }
     updateProfile(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50,7 +52,8 @@ let ProfileService = class ProfileService {
                 // Create new profile
                 profile = this.profileRepo.create({
                     customer_id: dto.customer_id,
-                    name: dto.name,
+                    first_name: dto.first_name,
+                    last_name: dto.last_name,
                     profile_image: dto.profile_image,
                     status_message: dto.status_message,
                     description: dto.description,
@@ -60,10 +63,15 @@ let ProfileService = class ProfileService {
                 });
                 yield this.profileRepo.save(profile);
                 // Also update Users table
-                yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name, profile_image: dto.profile_image });
+                yield this.userRepo.update({ customer_id: dto.customer_id }, {
+                    first_name: dto.first_name,
+                    last_name: dto.last_name,
+                    profile_image: dto.profile_image
+                });
                 return new base_response_1.BaseResponse(true, 201, {
                     customer_id: profile.customer_id,
-                    name: profile.name,
+                    first_name: profile.first_name,
+                    last_name: profile.last_name,
                     profile_image: profile.profile_image,
                     status_message: profile.status_message,
                     description: profile.description,
@@ -74,7 +82,8 @@ let ProfileService = class ProfileService {
             }
             else {
                 // Update existing
-                profile.name = dto.name || profile.name;
+                profile.first_name = dto.first_name || profile.first_name;
+                profile.last_name = dto.last_name || profile.last_name;
                 profile.profile_image = dto.profile_image || profile.profile_image;
                 profile.status_message = dto.status_message || profile.status_message;
                 profile.description = dto.description || profile.description;
@@ -82,12 +91,17 @@ let ProfileService = class ProfileService {
                 profile.updated_at = new Date();
                 yield this.profileRepo.save(profile);
                 // Update Users table name
-                if (dto.name) {
-                    yield this.userRepo.update({ customer_id: dto.customer_id }, { name: dto.name, profile_image: dto.profile_image });
+                if (dto.first_name && dto.last_name) {
+                    yield this.userRepo.update({ customer_id: dto.customer_id }, {
+                        first_name: dto.first_name,
+                        last_name: dto.last_name,
+                        profile_image: dto.profile_image
+                    });
                 }
                 return new base_response_1.BaseResponse(true, 200, {
                     customer_id: profile.customer_id,
-                    name: profile.name,
+                    first_name: profile.first_name,
+                    last_name: profile.last_name,
                     profile_image: profile.profile_image,
                     status_message: profile.status_message,
                     description: profile.description,
@@ -99,14 +113,8 @@ let ProfileService = class ProfileService {
     }
     uploadProfileImage(file) {
         return __awaiter(this, void 0, void 0, function* () {
-            let imageUrl = '';
-            if (process.env.STORAGE_DRIVER === 's3') {
-                imageUrl = yield this.s3StorageService.uploadProfileImage(file);
-            }
-            else {
-                imageUrl = yield this.localStorageService.uploadProfileImage(file);
-            }
-            // Save into uploaded_files table
+            const imageUrl = yield this.storageService.upload(file);
+            // Save to uploaded_files table
             yield this.uploadedFileRepo.save({
                 path: imageUrl,
             });
@@ -120,10 +128,12 @@ exports.ProfileService = ProfileService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(profile_entity_1.Profile)),
     __param(4, (0, typeorm_1.InjectRepository)(uploaded_files_entity_1.UploadedFile)),
     __param(5, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(6, (0, common_1.Inject)('StorageService')),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         _i18n_service_1.I18nService,
         local_storage_service_1.LocalStorageService,
         s3_storage_service_1.S3StorageService,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        storage_service_1.StorageService])
 ], ProfileService);

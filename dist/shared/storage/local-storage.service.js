@@ -53,14 +53,15 @@ const common_1 = require("@nestjs/common");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let LocalStorageService = class LocalStorageService {
-    uploadProfileImage(file) {
+    upload(file) {
         return __awaiter(this, void 0, void 0, function* () {
-            const uploadPath = path.join(__dirname, '../../uploads/profile');
-            if (!fs.existsSync(uploadPath))
+            const uploadPath = path.resolve(__dirname, '../../../uploads');
+            if (!fs.existsSync(uploadPath)) {
                 fs.mkdirSync(uploadPath, { recursive: true });
+            }
             const filePath = path.join(uploadPath, file.originalname);
             fs.writeFileSync(filePath, file.buffer);
-            return `/uploads/profile/${file.originalname}`;
+            return `/uploads/${file.originalname}`;
         });
     }
 };

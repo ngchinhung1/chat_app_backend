@@ -15,7 +15,10 @@ export class User {
     country_code!: string;
 
     @Column({nullable: true})
-    name?: string;
+    first_name?: string;
+
+    @Column({nullable: true})
+    last_name?: string;
 
     @Column({nullable: true})
     profile_image?: string;
@@ -36,7 +39,7 @@ export class User {
     is_deleted!: boolean;
 
     @Column({unique: true})
-    customer_id?: string;
+    customer_id!: string;
 
     @Column({nullable: true})
     blocked_at!: Date;

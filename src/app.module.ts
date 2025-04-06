@@ -12,6 +12,7 @@ import {ApiLoggerMiddleware} from "./log/api-logger.middleware";
 import {ApiLoggerInterceptor} from "./log/log.interceptor";
 import {I18nModule} from "./i18n/i18n.module";
 import {JwtModule} from "@nestjs/jwt";
+import {VoiceUploadModule} from "./feature/chat/voice-upload.module";
 
 @Module({
     imports: [
@@ -46,6 +47,7 @@ import {JwtModule} from "@nestjs/jwt";
         StorageModule,
         LogModule,
         I18nModule,
+        VoiceUploadModule,
     ],
     providers: [
         ApiLoggerInterceptor,

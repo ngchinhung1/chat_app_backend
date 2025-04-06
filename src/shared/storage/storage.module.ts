@@ -17,7 +17,7 @@ import {S3StorageService} from './s3-storage.service';
                 localStorageService: LocalStorageService,
                 s3StorageService: S3StorageService,
             ) => {
-                return config.get('STORAGE_DRIVER') === 's3'
+                return process.env.USE_S3 === 'true'
                     ? s3StorageService
                     : localStorageService;
             },

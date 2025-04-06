@@ -153,7 +153,8 @@ export class AuthService {
             phone_number: user.phone_number,
             token,
             customer_id: user.customer_id,
-            name: user.name ?? '',
+            first_name: user.first_name ?? '',
+            last_name: user.last_name ?? '',
             is_user: isNewUser,
             country: getCountryNameByCode(user.country_code),
         }, this.i18n.getMessage(language, isNewUser ? 'REGISTER_SUCCESS' : 'LOGIN_SUCCESS'));

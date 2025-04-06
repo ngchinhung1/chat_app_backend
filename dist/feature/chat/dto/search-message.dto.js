@@ -9,21 +9,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SendMessageDto = void 0;
+exports.SearchMessageDto = void 0;
 const class_validator_1 = require("class-validator");
-class SendMessageDto {
+class SearchMessageDto {
 }
-exports.SendMessageDto = SendMessageDto;
+exports.SearchMessageDto = SearchMessageDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "chatId", void 0);
+], SearchMessageDto.prototype, "chatId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "content", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "voiceUrl", void 0);
+], SearchMessageDto.prototype, "keyword", void 0);

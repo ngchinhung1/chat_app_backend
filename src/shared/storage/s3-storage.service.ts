@@ -1,9 +1,10 @@
 import {Injectable} from '@nestjs/common';
 import {S3Client, PutObjectCommand} from '@aws-sdk/client-s3';
 import {ConfigService} from '@nestjs/config';
+import {StorageService} from "./storage.service";
 
 @Injectable()
-export class S3StorageService {
+export class S3StorageService implements StorageService {
     private readonly s3Client: S3Client;
     private readonly bucketName: string;
 
@@ -18,7 +19,7 @@ export class S3StorageService {
         this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME') || 'default-bucket';
     }
 
-    async uploadProfileImage(file: Express.Multer.File): Promise<string> {
+    async upload(file: Express.Multer.File): Promise<string> {
         const fileName = `profile/${Date.now()}-${file.originalname}`;
 
         await this.s3Client.send(

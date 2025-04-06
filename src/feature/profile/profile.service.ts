@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common';
+import {Inject, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {UpdateProfileDto} from './dto/updateProfile.dto';
@@ -9,6 +9,7 @@ import {LocalStorageService} from "../../shared/storage/local-storage.service";
 import {S3StorageService} from "../../shared/storage/s3-storage.service";
 import {UploadedFile} from '../../shared/entities/uploaded_files.entity';
 import {User} from "../auth/entities/user.entity";
+import {StorageService} from "../../shared/storage/storage.service";
 
 @Injectable()
 export class ProfileService {
@@ -22,6 +23,8 @@ export class ProfileService {
         private readonly uploadedFileRepo: Repository<UploadedFile>,
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
+        @Inject('StorageService')
+        private readonly storageService: StorageService,
     ) {
     }
 
@@ -34,7 +37,8 @@ export class ProfileService {
             // Create new profile
             profile = this.profileRepo.create({
                 customer_id: dto.customer_id,
-                name: dto.name,
+                first_name: dto.first_name,
+                last_name: dto.last_name,
                 profile_image: dto.profile_image,
                 status_message: dto.status_message,
                 description: dto.description,
@@ -48,12 +52,17 @@ export class ProfileService {
             // Also update Users table
             await this.userRepo.update(
                 {customer_id: dto.customer_id},
-                {name: dto.name, profile_image: dto.profile_image},
+                {
+                    first_name: dto.first_name,
+                    last_name: dto.last_name,
+                    profile_image: dto.profile_image
+                },
             );
 
             return new BaseResponse(true, 201, {
                 customer_id: profile.customer_id,
-                name: profile.name,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
                 profile_image: profile.profile_image,
                 status_message: profile.status_message,
                 description: profile.description,
@@ -63,7 +72,8 @@ export class ProfileService {
             }, this.i18n.getMessage(language, 'USER_PROFILE_CREATED_SUCCESSFULLY'));
         } else {
             // Update existing
-            profile.name = dto.name || profile.name;
+            profile.first_name = dto.first_name || profile.first_name;
+            profile.last_name = dto.last_name || profile.last_name;
             profile.profile_image = dto.profile_image || profile.profile_image;
             profile.status_message = dto.status_message || profile.status_message;
             profile.description = dto.description || profile.description;
@@ -73,16 +83,21 @@ export class ProfileService {
             await this.profileRepo.save(profile);
 
             // Update Users table name
-            if (dto.name) {
+            if (dto.first_name && dto.last_name) {
                 await this.userRepo.update(
                     {customer_id: dto.customer_id},
-                    {name: dto.name, profile_image: dto.profile_image},
+                    {
+                        first_name: dto.first_name,
+                        last_name: dto.last_name,
+                        profile_image: dto.profile_image
+                    },
                 );
             }
 
             return new BaseResponse(true, 200, {
                 customer_id: profile.customer_id,
-                name: profile.name,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
                 profile_image: profile.profile_image,
                 status_message: profile.status_message,
                 description: profile.description,
@@ -93,15 +108,9 @@ export class ProfileService {
     }
 
     async uploadProfileImage(file: Express.Multer.File): Promise<string> {
-        let imageUrl = '';
+        const imageUrl = await this.storageService.upload(file);
 
-        if (process.env.STORAGE_DRIVER === 's3') {
-            imageUrl = await this.s3StorageService.uploadProfileImage(file);
-        } else {
-            imageUrl = await this.localStorageService.uploadProfileImage(file);
-        }
-
-        // Save into uploaded_files table
+        // Save to uploaded_files table
         await this.uploadedFileRepo.save({
             path: imageUrl,
         });

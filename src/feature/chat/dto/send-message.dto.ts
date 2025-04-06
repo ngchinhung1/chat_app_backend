@@ -1,4 +1,4 @@
-import {IsString} from 'class-validator';
+import {IsOptional, IsString} from 'class-validator';
 
 export class SendMessageDto {
     @IsString()
@@ -6,4 +6,8 @@ export class SendMessageDto {
 
     @IsString()
     content!: string;
+
+    @IsOptional()
+    @IsString()
+    voiceUrl?: string;
 }

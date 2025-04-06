@@ -27,10 +27,12 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
+const chat_list_entity_1 = require("./entities/chat_list.entity");
 let ChatService = class ChatService {
-    constructor(chatParticipantRepo, messageRepo) {
+    constructor(chatParticipantRepo, messageRepo, chatListRepo) {
         this.chatParticipantRepo = chatParticipantRepo;
         this.messageRepo = messageRepo;
+        this.chatListRepo = chatListRepo;
     }
     getChatListForUser(customerId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -79,8 +81,9 @@ let ChatService = class ChatService {
     saveMessage(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const message = this.messageRepo.create({
-                chatId: data.chatId,
+                chat_id: data.chatId,
                 content: data.content,
+                voice_url: data.voiceUrl,
                 senderCustomerId: data.senderCustomerId,
             });
             return yield this.messageRepo.save(message);
@@ -104,12 +107,61 @@ let ChatService = class ChatService {
             return ((_a = participant === null || participant === void 0 ? void 0 : participant.user) === null || _a === void 0 ? void 0 : _a.notificationToken) || null;
         });
     }
+    createOrJoinChat(userA, userB) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // 1. Check if a chat already exists (both directions)
+            const existing = yield this.chatListRepo.findOne({
+                where: [
+                    { user1_id: userA, user2_id: userB },
+                    { user1_id: userB, user2_id: userA },
+                ],
+            });
+            // 2. If chat exists, return its ID
+            if (existing) {
+                return { chatId: existing.id };
+            }
+            // 3. Create new chat record
+            const chat = yield this.chatListRepo.save({
+                user1_id: userA,
+                user2_id: userB,
+            });
+            // 4. Add both users to the chat_participants
+            yield this.chatParticipantRepo.save([
+                { chat_id: chat.id, user_id: userA },
+                { chat_id: chat.id, user_id: userB },
+            ]);
+            // 5. Return new chat ID
+            return { chatId: chat.id };
+        });
+    }
+    getRecipientId(chatId, senderId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const participants = yield this.chatParticipantRepo.find({
+                where: { chat_id: chatId },
+            });
+            const recipient = participants.find(p => p.user_id !== senderId);
+            return (recipient === null || recipient === void 0 ? void 0 : recipient.user_id) || null;
+        });
+    }
+    searchMessages(chatId, keyword) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.messageRepo.find({
+                where: {
+                    chat_id: chatId,
+                    content: (0, typeorm_2.ILike)(`%${keyword}%`),
+                },
+                order: { createdAt: 'DESC' },
+            });
+        });
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipantEntity)),
     __param(1, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatListEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], ChatService);
