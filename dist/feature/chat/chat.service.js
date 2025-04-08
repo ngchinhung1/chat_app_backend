@@ -86,9 +86,15 @@ let ChatService = class ChatService {
                 chat_id: data.chatId,
                 content: data.content,
                 voice_url: data.voiceUrl,
+                file_type: data.fileType,
                 senderCustomerId: data.senderCustomerId,
             });
             return yield this.messageRepo.save(message);
+        });
+    }
+    markMessageAsRead(messageId, readAt) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.messageRepo.update({ id: messageId }, { read_at: readAt });
         });
     }
     updateLastReadAt(chatId, userId) {

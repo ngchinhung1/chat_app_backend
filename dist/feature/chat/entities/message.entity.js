@@ -43,7 +43,7 @@ __decorate([
     __metadata("design:type", user_entity_1.UserEntity)
 ], MessageEntity.prototype, "sender", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "content", void 0);
 __decorate([
@@ -62,6 +62,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "voice_url", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Date)
+], MessageEntity.prototype, "read_at", void 0);
 exports.MessageEntity = MessageEntity = __decorate([
     (0, typeorm_1.Entity)('message')
 ], MessageEntity);

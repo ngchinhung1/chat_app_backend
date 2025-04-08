@@ -1,11 +1,11 @@
 import {IsNotEmpty, IsOptional, IsString} from "class-validator";
 
 export class MobileSettingsDto {
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     devicePlatform?: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     notificationToken?: string;
 
@@ -17,7 +17,7 @@ export class MobileSettingsDto {
     @IsString()
     deviceId?: string;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
     customer_id!: string;
 }

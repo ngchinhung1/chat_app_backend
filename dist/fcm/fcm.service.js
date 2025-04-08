@@ -51,7 +51,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FcmService = void 0;
 const common_1 = require("@nestjs/common");
 const admin = __importStar(require("firebase-admin"));
+const firebase_config_1 = require("../config/firebase.config");
 let FcmService = class FcmService {
+    onModuleInit() {
+        (0, firebase_config_1.initializeFirebase)();
+    }
     send(payload) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

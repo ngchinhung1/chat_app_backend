@@ -37,7 +37,7 @@ export class MessageEntity {
     sender?: UserEntity;
 
     // Message text content
-    @Column({type: 'text', nullable: true})
+    @Column({nullable: true})
     content?: string;
 
     // Timestamp of message creation
@@ -45,12 +45,15 @@ export class MessageEntity {
     createdAt!: Date;
 
     @Column({nullable: true})
-    file_type?: 'text' | 'image' | 'video' | 'file';
+    file_type?: string;
 
     @Column({nullable: true})
     attachment_url?: string;
 
     @Column({nullable: true})
     voice_url?: string;
+
+    @Column({nullable: true})
+    read_at!: Date;
 
 }

@@ -71,18 +71,27 @@ export class ChatService {
 
     async saveMessage(data: {
         chatId: string;
-        content: string;
+        content?: string;
         voiceUrl?: string;
+        fileType?: string;
         senderCustomerId: string;
     }): Promise<MessageEntity> {
         const message = this.messageRepo.create({
             chat_id: data.chatId,
             content: data.content,
             voice_url: data.voiceUrl,
+            file_type: data.fileType,
             senderCustomerId: data.senderCustomerId,
         });
 
         return await this.messageRepo.save(message);
+    }
+
+    async markMessageAsRead(messageId: string, readAt: Date): Promise<void> {
+        await this.messageRepo.update(
+            {id: messageId},
+            {read_at: readAt}
+        );
     }
 
     async updateLastReadAt(chatId: string, userId: string): Promise<void> {

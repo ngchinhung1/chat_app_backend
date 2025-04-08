@@ -15,12 +15,12 @@ class MobileSettingsDto {
 }
 exports.MobileSettingsDto = MobileSettingsDto;
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], MobileSettingsDto.prototype, "devicePlatform", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], MobileSettingsDto.prototype, "notificationToken", void 0);
@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], MobileSettingsDto.prototype, "deviceId", void 0);
 __decorate([
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], MobileSettingsDto.prototype, "customer_id", void 0);
