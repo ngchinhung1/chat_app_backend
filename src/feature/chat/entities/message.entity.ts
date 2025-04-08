@@ -7,7 +7,7 @@ import {
     JoinColumn,
 } from 'typeorm';
 import {ChatListEntity} from './chat_list.entity';
-import {User} from "../../auth/entities/user.entity";
+import {UserEntity} from "../../auth/entities/user.entity";
 
 @Entity('message')
 export class MessageEntity {
@@ -30,11 +30,11 @@ export class MessageEntity {
     senderCustomerId?: string;
 
     // Relation to User entity
-    @ManyToOne(() => User, (user) => user.messages, {
+    @ManyToOne(() => UserEntity, (user) => user.messages, {
         onDelete: 'CASCADE',
     })
     @JoinColumn({name: 'sender_customer_id', referencedColumnName: 'customer_id'})
-    sender?: User;
+    sender?: UserEntity;
 
     // Message text content
     @Column({type: 'text', nullable: true})

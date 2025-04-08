@@ -36,11 +36,11 @@ __decorate([
     __metadata("design:type", String)
 ], MessageEntity.prototype, "senderCustomerId", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.messages, {
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, (user) => user.messages, {
         onDelete: 'CASCADE',
     }),
     (0, typeorm_1.JoinColumn)({ name: 'sender_customer_id', referencedColumnName: 'customer_id' }),
-    __metadata("design:type", user_entity_1.User)
+    __metadata("design:type", user_entity_1.UserEntity)
 ], MessageEntity.prototype, "sender", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),

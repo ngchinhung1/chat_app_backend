@@ -20,9 +20,9 @@ __decorate([
     __metadata("design:type", String)
 ], Profile.prototype, "customer_id", void 0);
 __decorate([
-    (0, typeorm_1.OneToOne)(() => user_entity_1.User),
+    (0, typeorm_1.OneToOne)(() => user_entity_1.UserEntity),
     (0, typeorm_1.JoinColumn)({ name: 'customer_id', referencedColumnName: 'customer_id' }),
-    __metadata("design:type", user_entity_1.User)
+    __metadata("design:type", user_entity_1.UserEntity)
 ], Profile.prototype, "user", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),

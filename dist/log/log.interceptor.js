@@ -81,6 +81,7 @@ let ApiLoggerInterceptor = class ApiLoggerInterceptor {
             });
             return wrappedData;
         }), (0, rxjs_1.catchError)((error) => {
+            console.error('Unexpected error:', error);
             const duration = Date.now() - now;
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logService.logError({

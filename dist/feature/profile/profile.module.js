@@ -22,7 +22,7 @@ let ProfileModule = class ProfileModule {
 exports.ProfileModule = ProfileModule;
 exports.ProfileModule = ProfileModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([profile_entity_1.Profile, uploaded_files_entity_1.UploadedFile, user_entity_1.User])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([profile_entity_1.Profile, uploaded_files_entity_1.UploadedFile, user_entity_1.UserEntity])],
         controllers: [profile_controller_1.ProfileController],
         providers: [profile_service_1.ProfileService, _i18n_service_1.I18nService, s3_storage_service_1.S3StorageService, local_storage_service_1.LocalStorageService],
         exports: [profile_service_1.ProfileService],

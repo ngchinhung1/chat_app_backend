@@ -127,7 +127,7 @@ exports.ProfileService = ProfileService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(profile_entity_1.Profile)),
     __param(4, (0, typeorm_1.InjectRepository)(uploaded_files_entity_1.UploadedFile)),
-    __param(5, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(5, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __param(6, (0, common_1.Inject)('StorageService')),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         _i18n_service_1.I18nService,

@@ -8,10 +8,11 @@ import {TypeOrmModule} from "@nestjs/typeorm";
 import {ChatParticipantEntity} from "./entities/chat_participant.entity";
 import {MessageEntity} from "./entities/message.entity";
 import {ChatListEntity} from "./entities/chat_list.entity";
+import {UserEntity} from "../auth/entities/user.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([ChatParticipantEntity, MessageEntity, ChatListEntity]),
+        TypeOrmModule.forFeature([ChatParticipantEntity, MessageEntity, ChatListEntity, UserEntity]),
         JwtModule.register({}),
         ConfigModule,
         FcmModule,

@@ -1,6 +1,6 @@
 import {Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn} from 'typeorm';
 import {ChatListEntity} from './chat_list.entity';
-import {User} from "../../auth/entities/user.entity";
+import {UserEntity} from "../../auth/entities/user.entity";
 
 @Entity('chat_participant')
 export class ChatParticipantEntity {
@@ -13,7 +13,10 @@ export class ChatParticipantEntity {
     @Column()
     user_id?: string;
 
-    @Column({type: 'enum', enum: ['admin', 'member'], default: 'member'})
+    @Column()
+    customer_id?: string;
+
+    @Column({default: 'member'})
     role?: 'admin' | 'member';
 
     @Column({default: false})
@@ -31,11 +34,12 @@ export class ChatParticipantEntity {
     @CreateDateColumn()
     joined_at!: Date;
 
-    @ManyToOne(() => ChatListEntity)
+    @ManyToOne(() => ChatListEntity, (chat) => chat.participants, {onDelete: 'CASCADE'})
+    @JoinColumn({name: 'chat_id'})
     chat?: ChatListEntity;
 
-    @ManyToOne(() => User, (user) => user.chatParticipants)
-    @JoinColumn({name: 'user_id', referencedColumnName: 'customer_id'})
-    user?: User;
+    @ManyToOne(() => UserEntity, {onDelete: 'CASCADE'})
+    @JoinColumn({name: 'user_id'})
+    user?: UserEntity;
 
 }

@@ -21,7 +21,7 @@ exports.MobileSettingModule = MobileSettingModule;
 exports.MobileSettingModule = MobileSettingModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([mobile_setting_entity_1.MobileSetting, user_entity_1.User]),
+            typeorm_1.TypeOrmModule.forFeature([mobile_setting_entity_1.MobileSetting, user_entity_1.UserEntity]),
             engagement_identifier_module_1.EngagementIdentifierModule,
         ],
         controllers: [mobile_setting_controller_1.MobileSettingController],

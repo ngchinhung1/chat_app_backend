@@ -4,7 +4,7 @@ import {MessageEntity} from "../../chat/entities/message.entity";
 import {ChatParticipantEntity} from "../../chat/entities/chat_participant.entity";
 
 @Entity('users')
-export class User {
+export class UserEntity {
     @PrimaryGeneratedColumn()
     id!: string;
 

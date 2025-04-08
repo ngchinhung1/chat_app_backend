@@ -235,4 +235,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
     }
 
+    @SubscribeMessage('get_messages')
+    async handleGetMessages(
+        @MessageBody() data: { chatId: string },
+        @ConnectedSocket() client: Socket
+    ) {
+        const messages = await this.chatService.getMessagesByChatId(data.chatId);
+        client.emit('messages_response', messages);
+    }
+
 }

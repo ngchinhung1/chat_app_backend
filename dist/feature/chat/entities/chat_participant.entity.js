@@ -29,7 +29,11 @@ __decorate([
     __metadata("design:type", String)
 ], ChatParticipantEntity.prototype, "user_id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ['admin', 'member'], default: 'member' }),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ChatParticipantEntity.prototype, "customer_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: 'member' }),
     __metadata("design:type", String)
 ], ChatParticipantEntity.prototype, "role", void 0);
 __decorate([
@@ -53,13 +57,14 @@ __decorate([
     __metadata("design:type", Date)
 ], ChatParticipantEntity.prototype, "joined_at", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity),
+    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.participants, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'chat_id' }),
     __metadata("design:type", chat_list_entity_1.ChatListEntity)
 ], ChatParticipantEntity.prototype, "chat", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.chatParticipants),
-    (0, typeorm_1.JoinColumn)({ name: 'user_id', referencedColumnName: 'customer_id' }),
-    __metadata("design:type", user_entity_1.User)
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
+    __metadata("design:type", user_entity_1.UserEntity)
 ], ChatParticipantEntity.prototype, "user", void 0);
 exports.ChatParticipantEntity = ChatParticipantEntity = __decorate([
     (0, typeorm_1.Entity)('chat_participant')

@@ -60,9 +60,9 @@ __decorate([
     __metadata("design:type", Boolean)
 ], EngagementIdentifier.prototype, "isRegistered", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true, onDelete: 'SET NULL' }),
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity, { nullable: true, onDelete: 'SET NULL' }),
     (0, typeorm_1.JoinColumn)({ name: 'customer_id', referencedColumnName: 'customer_id' }),
-    __metadata("design:type", user_entity_1.User)
+    __metadata("design:type", user_entity_1.UserEntity)
 ], EngagementIdentifier.prototype, "user", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),

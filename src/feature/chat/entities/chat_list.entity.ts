@@ -1,15 +1,16 @@
 import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
 import {MessageEntity} from "./message.entity";
+import {ChatParticipantEntity} from "./chat_participant.entity";
 
 @Entity('chat_list')
 export class ChatListEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column()
+    @Column({ nullable: true })
     user1_id?: string;
 
-    @Column()
+    @Column({ nullable: true })
     user2_id?: string;
 
     @Column({type: 'enum', enum: ['private', 'group'], default: 'private'})
@@ -21,7 +22,7 @@ export class ChatListEntity {
     @Column({nullable: true})
     avatar_url?: string;
 
-    @Column()
+    @Column({ nullable: true })
     created_by?: string;
 
     @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
@@ -41,4 +42,8 @@ export class ChatListEntity {
 
     @OneToMany(() => MessageEntity, (message) => message.chat)
     messages?: MessageEntity[];
+
+    @OneToMany(() => ChatParticipantEntity, (cp) => cp.chat)
+    participants?: ChatParticipantEntity[];
+
 }

@@ -14,16 +14,20 @@ const contact_service_1 = require("./contact.service");
 const contact_controller_1 = require("./contact.controller");
 const user_entity_1 = require("../auth/entities/user.entity");
 const chat_module_1 = require("../chat/chat.module");
+const chat_service_1 = require("../chat/chat.service");
+const chat_participant_entity_1 = require("../chat/entities/chat_participant.entity");
+const message_entity_1 = require("../chat/entities/message.entity");
+const chat_list_entity_1 = require("../chat/entities/chat_list.entity");
 let ContactModule = class ContactModule {
 };
 exports.ContactModule = ContactModule;
 exports.ContactModule = ContactModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([contact_entity_1.Contact, user_entity_1.User]),
+            typeorm_1.TypeOrmModule.forFeature([contact_entity_1.Contact, user_entity_1.UserEntity, chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity, chat_list_entity_1.ChatListEntity]),
             chat_module_1.ChatModule,
         ],
-        providers: [contact_service_1.ContactService],
+        providers: [contact_service_1.ContactService, chat_service_1.ChatService,],
         controllers: [contact_controller_1.ContactController],
     })
 ], ContactModule);

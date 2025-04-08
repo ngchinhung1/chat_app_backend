@@ -13,6 +13,7 @@ import {ApiLoggerInterceptor} from "./log/log.interceptor";
 import {I18nModule} from "./i18n/i18n.module";
 import {JwtModule} from "@nestjs/jwt";
 import {VoiceUploadModule} from "./feature/chat/voice-upload.module";
+import {ContactModule} from "./feature/contact/contact.module";
 
 @Module({
     imports: [
@@ -48,6 +49,7 @@ import {VoiceUploadModule} from "./feature/chat/voice-upload.module";
         LogModule,
         I18nModule,
         VoiceUploadModule,
+        ContactModule,
     ],
     providers: [
         ApiLoggerInterceptor,

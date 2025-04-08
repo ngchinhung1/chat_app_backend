@@ -3,7 +3,7 @@ import {JwtService} from '@nestjs/jwt';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {OtpVerification} from './entities/otp_verification.entity';
-import {User} from './entities/user.entity';
+import {UserEntity} from './entities/user.entity';
 import {AuthRequestOtpDto} from './dto/auth-request-otp.dto';
 import {AuthVerifyOtpDto} from './dto/auth-verify-otp.dto';
 import {BaseResponse} from "../../utils/base-response";
@@ -16,8 +16,8 @@ export class AuthService {
     constructor(
         @InjectRepository(OtpVerification)
         private readonly otpRepo: Repository<OtpVerification>,
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
+        @InjectRepository(UserEntity)
+        private readonly userRepo: Repository<UserEntity>,
         private readonly jwtService: JwtService,
         @InjectRepository(EngagementIdentifier)
         private readonly engagementRepo: Repository<EngagementIdentifier>,

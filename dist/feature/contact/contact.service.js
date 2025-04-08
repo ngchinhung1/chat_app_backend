@@ -24,47 +24,57 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContactService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
-const contact_entity_1 = require("./entities/contact.entity");
 const typeorm_2 = require("typeorm");
-const user_entity_1 = require("../auth/entities/user.entity");
 const chat_service_1 = require("../chat/chat.service");
-const chat_gateway_1 = require("../chat/chat.gateway");
+const user_entity_1 = require("../auth/entities/user.entity");
+const contact_entity_1 = require("./entities/contact.entity");
 let ContactService = class ContactService {
-    constructor(contactRepo, userRepo, chatService, chatGateway) {
-        this.contactRepo = contactRepo;
-        this.userRepo = userRepo;
+    constructor(contactRepository, userRepository, // make sure this is added
+    chatService) {
+        this.contactRepository = contactRepository;
+        this.userRepository = userRepository;
         this.chatService = chatService;
-        this.chatGateway = chatGateway;
     }
-    addContact(dto, customerId) {
+    addContact(requester, createContactDto) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const exists = yield this.contactRepo.findOne({
-                where: { customer_id: customerId, phone_number: dto.phone_number },
-            });
-            if (exists)
-                throw new common_1.BadRequestException('Contact already exists');
-            const contact = this.contactRepo.create(Object.assign(Object.assign({}, dto), { customer_id: customerId }));
-            yield this.contactRepo.save(contact);
-            const matchedUser = yield this.userRepo.findOne({
+            const { phone_number, country_code, first_name, last_name } = createContactDto;
+            // 1. Check if contact already exists (by phone & country for this user)
+            const existing = yield this.contactRepository.findOne({
                 where: {
-                    phone_number: dto.phone_number,
-                    country_code: dto.country_code,
+                    ownerId: requester.id,
+                    phone_number,
+                    country_code,
                 },
             });
-            let chatId = null;
-            if (matchedUser) {
-                const result = yield this.chatService.createOrJoinChat(customerId, matchedUser.customer_id);
-                chatId = result.chatId;
-                // ✅ Emit chat_list_update to the current user
-                (_a = this.chatGateway.getSocketByUserId(customerId)) === null || _a === void 0 ? void 0 : _a.emit('chat_list_update', {
-                    chatId,
-                    lastMessage: '',
-                    unreadCount: 0,
-                    updatedAt: new Date().toISOString(),
-                });
+            let newContact;
+            let chat = null;
+            // 2. Try to find matched user in the system
+            const matchedUser = yield this.userRepository.findOneBy({
+                phone_number,
+                country_code,
+            });
+            if (existing) {
+                // 3a. Update existing contact info
+                existing.first_name = first_name;
+                existing.last_name = last_name;
+                existing.customer_id = (matchedUser === null || matchedUser === void 0 ? void 0 : matchedUser.customer_id) || existing.customer_id;
+                newContact = yield this.contactRepository.save(existing);
+                // 4a. If matched user exists, create/join private chat
+                if (matchedUser) {
+                    chat = yield this.chatService.findOrCreatePrivateChat(requester.customer_id, matchedUser.customer_id);
+                }
             }
-            return Object.assign(Object.assign({}, contact), { chatId });
+            else {
+                // 3b. Create new contact
+                newContact = this.contactRepository.create(Object.assign(Object.assign({}, createContactDto), { ownerId: requester.id, customer_id: matchedUser === null || matchedUser === void 0 ? void 0 : matchedUser.customer_id }));
+                // 4b. If matched user exists, create/join private chat
+                if (matchedUser) {
+                    chat = yield this.chatService.findOrCreatePrivateChat(requester.customer_id, matchedUser.customer_id);
+                }
+                yield this.contactRepository.save(newContact);
+            }
+            // 5. Return contact with optional chatId
+            return Object.assign(Object.assign({}, newContact), { chatId: (chat === null || chat === void 0 ? void 0 : chat.id) || null });
         });
     }
 };
@@ -72,9 +82,8 @@ exports.ContactService = ContactService;
 exports.ContactService = ContactService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(contact_entity_1.Contact)),
-    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
-        chat_service_1.ChatService,
-        chat_gateway_1.ChatGateway])
+        chat_service_1.ChatService])
 ], ContactService);

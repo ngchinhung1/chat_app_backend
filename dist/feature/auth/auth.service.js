@@ -170,7 +170,7 @@ exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(otp_verification_entity_1.OtpVerification)),
-    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __param(3, (0, typeorm_1.InjectRepository)(engagement_identifiers_entity_1.EngagementIdentifier)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,

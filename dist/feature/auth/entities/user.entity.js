@@ -9,119 +9,119 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
 const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
 const message_entity_1 = require("../../chat/entities/message.entity");
 const chat_participant_entity_1 = require("../../chat/entities/chat_participant.entity");
-let User = class User {
+let UserEntity = class UserEntity {
 };
-exports.User = User;
+exports.UserEntity = UserEntity;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", String)
-], User.prototype, "id", void 0);
+], UserEntity.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], User.prototype, "phone_number", void 0);
+], UserEntity.prototype, "phone_number", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], User.prototype, "country_code", void 0);
+], UserEntity.prototype, "country_code", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "first_name", void 0);
+], UserEntity.prototype, "first_name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "last_name", void 0);
+], UserEntity.prototype, "last_name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "profile_image", void 0);
+], UserEntity.prototype, "profile_image", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => engagement_identifiers_entity_1.EngagementIdentifier, (engagement) => engagement.user),
     __metadata("design:type", Array)
-], User.prototype, "engagementIdentifiers", void 0);
+], UserEntity.prototype, "engagementIdentifiers", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "devicePlatform", void 0);
+], UserEntity.prototype, "devicePlatform", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'is_verified', default: false }),
     __metadata("design:type", Boolean)
-], User.prototype, "isVerified", void 0);
+], UserEntity.prototype, "isVerified", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
-], User.prototype, "is_blocked", void 0);
+], UserEntity.prototype, "is_blocked", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
-], User.prototype, "is_deleted", void 0);
+], UserEntity.prototype, "is_deleted", void 0);
 __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
-], User.prototype, "customer_id", void 0);
+], UserEntity.prototype, "customer_id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
-], User.prototype, "blocked_at", void 0);
+], UserEntity.prototype, "blocked_at", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)
-], User.prototype, "deleted_at", void 0);
+], UserEntity.prototype, "deleted_at", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "country", void 0);
+], UserEntity.prototype, "country", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'created_at' }),
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], User.prototype, "createdAt", void 0);
+], UserEntity.prototype, "createdAt", void 0);
 __decorate([
     (0, typeorm_1.UpdateDateColumn)(),
     __metadata("design:type", Date)
-], User.prototype, "updated_at", void 0);
+], UserEntity.prototype, "updated_at", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "deviceId", void 0);
+], UserEntity.prototype, "deviceId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "device_model", void 0);
+], UserEntity.prototype, "device_model", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "language", void 0);
+], UserEntity.prototype, "language", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "app_version", void 0);
+], UserEntity.prototype, "app_version", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Boolean)
-], User.prototype, "is_google_play", void 0);
+], UserEntity.prototype, "is_google_play", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.sender),
     __metadata("design:type", Array)
-], User.prototype, "messages", void 0);
+], UserEntity.prototype, "messages", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipantEntity, (participant) => participant.user),
     __metadata("design:type", Array)
-], User.prototype, "chatParticipants", void 0);
+], UserEntity.prototype, "chatParticipants", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "notificationToken", void 0);
+], UserEntity.prototype, "notificationToken", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], User.prototype, "advertisementId", void 0);
-exports.User = User = __decorate([
+], UserEntity.prototype, "advertisementId", void 0);
+exports.UserEntity = UserEntity = __decorate([
     (0, typeorm_1.Entity)('users')
-], User);
+], UserEntity);

@@ -23,7 +23,7 @@ exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, otp_verification_entity_1.OtpVerification, engagement_identifiers_entity_1.EngagementIdentifier]),
+            typeorm_1.TypeOrmModule.forFeature([user_entity_1.UserEntity, otp_verification_entity_1.OtpVerification, engagement_identifiers_entity_1.EngagementIdentifier]),
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET,
                 signOptions: { expiresIn: '1d' },

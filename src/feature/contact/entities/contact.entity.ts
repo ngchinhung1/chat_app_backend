@@ -5,8 +5,11 @@ export class Contact {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column()
-    customer_id!: string;
+    @Column({ nullable: true })
+    customer_id?: string;
+
+    @Column({ nullable: true })
+    ownerId?: string;
 
     @Column()
     first_name?: string;

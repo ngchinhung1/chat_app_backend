@@ -17,13 +17,14 @@ const typeorm_1 = require("@nestjs/typeorm");
 const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const chat_list_entity_1 = require("./entities/chat_list.entity");
+const user_entity_1 = require("../auth/entities/user.entity");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity, chat_list_entity_1.ChatListEntity]),
+            typeorm_1.TypeOrmModule.forFeature([chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity, chat_list_entity_1.ChatListEntity, user_entity_1.UserEntity]),
             jwt_1.JwtModule.register({}),
             config_1.ConfigModule,
             fcm_module_1.FcmModule,

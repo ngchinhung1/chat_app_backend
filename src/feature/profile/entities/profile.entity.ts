@@ -1,14 +1,14 @@
 import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { User } from '../../auth/entities/user.entity';
+import { UserEntity } from '../../auth/entities/user.entity';
 
 @Entity('profiles')
 export class Profile {
     @PrimaryColumn()
     customer_id!: string;
 
-    @OneToOne(() => User)
+    @OneToOne(() => UserEntity)
     @JoinColumn({ name: 'customer_id', referencedColumnName: 'customer_id' })
-    user!: User;
+    user!: UserEntity;
 
     @Column({ nullable: true })
     first_name?: string;

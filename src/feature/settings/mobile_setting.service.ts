@@ -2,7 +2,7 @@ import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {MobileSetting} from "./entities/mobile_setting.entity";
-import {User} from "../auth/entities/user.entity";
+import {UserEntity} from "../auth/entities/user.entity";
 import {MobileSettingsDto} from "./dto/mobile_setting.dto";
 
 
@@ -11,8 +11,8 @@ export class MobileSettingsService {
     constructor(
         @InjectRepository(MobileSetting)
         private readonly settingRepo: Repository<MobileSetting>,
-        @InjectRepository(User)
-        private userRepo: Repository<User>,
+        @InjectRepository(UserEntity)
+        private userRepo: Repository<UserEntity>,
     ) {
     }
 

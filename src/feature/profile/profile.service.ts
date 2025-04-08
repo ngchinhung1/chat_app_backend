@@ -8,7 +8,7 @@ import {I18nService} from "../../i18n/ i18n.service";
 import {LocalStorageService} from "../../shared/storage/local-storage.service";
 import {S3StorageService} from "../../shared/storage/s3-storage.service";
 import {UploadedFile} from '../../shared/entities/uploaded_files.entity';
-import {User} from "../auth/entities/user.entity";
+import {UserEntity} from "../auth/entities/user.entity";
 import {StorageService} from "../../shared/storage/storage.service";
 
 @Injectable()
@@ -21,8 +21,8 @@ export class ProfileService {
         private readonly s3StorageService: S3StorageService,
         @InjectRepository(UploadedFile)
         private readonly uploadedFileRepo: Repository<UploadedFile>,
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
+        @InjectRepository(UserEntity)
+        private readonly userRepo: Repository<UserEntity>,
         @Inject('StorageService')
         private readonly storageService: StorageService,
     ) {

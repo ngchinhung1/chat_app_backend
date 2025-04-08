@@ -85,6 +85,7 @@ export class ApiLoggerInterceptor implements NestInterceptor {
                 return wrappedData;
             }),
             catchError((error: unknown) => {
+                console.error('Unexpected error:', error);
                 const duration = Date.now() - now;
                 const errorMessage = error instanceof Error ? error.message : String(error);
 

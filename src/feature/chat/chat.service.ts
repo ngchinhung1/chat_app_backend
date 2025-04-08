@@ -3,8 +3,8 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {ILike, MoreThan, Not, Repository} from 'typeorm';
 import {ChatParticipantEntity} from "./entities/chat_participant.entity";
 import {MessageEntity} from "./entities/message.entity";
-import {User} from "../auth/entities/user.entity";
 import {ChatListEntity} from "./entities/chat_list.entity";
+import {UserEntity} from "../auth/entities/user.entity";
 
 @Injectable()
 export class ChatService {
@@ -15,6 +15,8 @@ export class ChatService {
         private readonly messageRepo: Repository<MessageEntity>,
         @InjectRepository(ChatListEntity)
         private readonly chatListRepo: Repository<ChatListEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepo: Repository<UserEntity>,
     ) {
     }
 
@@ -102,34 +104,55 @@ export class ChatService {
         return participant?.user?.notificationToken || null;
     }
 
-    async createOrJoinChat(userA: string, userB: string): Promise<{ chatId: string }> {
-        // 1. Check if a chat already exists (both directions)
-        const existing = await this.chatListRepo.findOne({
-            where: [
-                {user1_id: userA, user2_id: userB},
-                {user1_id: userB, user2_id: userA},
-            ],
-        });
+    async openPrivateChatRoom(userA: UserEntity, userB: UserEntity): Promise<ChatListEntity> {
+        return await this.findOrCreatePrivateChat(userA.customer_id, userB.customer_id);
+    }
 
-        // 2. If chat exists, return its ID
-        if (existing) {
-            return {chatId: existing.id};
+    async findOrCreatePrivateChat(userACustomerId: string, userBCustomerId: string): Promise<ChatListEntity> {
+        const [userA, userB] = [userACustomerId, userBCustomerId].sort();
+
+        const existingChat = await this.chatListRepo
+            .createQueryBuilder('chat')
+            .innerJoin('chat.participants', 'participantA', 'participantA.customer_id = :userA', {userA})
+            .innerJoin('chat.participants', 'participantB', 'participantB.customer_id = :userB', {userB})
+            .where('chat.chat_type = :type', {type: 'private'})
+            .getOne();
+
+        if (existingChat) return existingChat;
+
+        const savedChat = await this.chatListRepo.save(
+            this.chatListRepo.create({
+                chat_type: 'private',
+                user1_id: userA,
+                user2_id: userB,
+                created_by: userA,
+            }),
+        );
+
+        // 🧠 Must load full users to assign `user: UserEntity`
+        const userAEntity = await this.userRepo.findOne({where: {customer_id: userA}});
+        const userBEntity = await this.userRepo.findOne({where: {customer_id: userB}});
+
+        if (!userAEntity || !userBEntity) {
+            throw new Error('One or both users not found');
         }
 
-        // 3. Create new chat record
-        const chat = await this.chatListRepo.save({
-            user1_id: userA,
-            user2_id: userB,
-        });
-
-        // 4. Add both users to the chat_participants
-        await this.chatParticipantRepo.save([
-            {chat_id: chat.id, user_id: userA},
-            {chat_id: chat.id, user_id: userB},
+        const participants = this.chatParticipantRepo.create([
+            {
+                chat: savedChat,
+                user: userAEntity, // ✅ now TypeORM can set `user_id`
+                customer_id: userAEntity.customer_id,
+            },
+            {
+                chat: savedChat,
+                user: userBEntity,
+                customer_id: userBEntity.customer_id,
+            },
         ]);
 
-        // 5. Return new chat ID
-        return {chatId: chat.id};
+        await this.chatParticipantRepo.save(participants);
+
+        return savedChat;
     }
 
     async getRecipientId(chatId: string, senderId: string): Promise<string | null> {
@@ -148,6 +171,13 @@ export class ChatService {
                 content: ILike(`%${keyword}%`),
             },
             order: {createdAt: 'DESC'},
+        });
+    }
+
+    async getMessagesByChatId(chatId: string): Promise<MessageEntity[]> {
+        return this.messageRepo.find({
+            where: {chat: {id: chatId}},
+            order: {createdAt: 'ASC'},
         });
     }
 

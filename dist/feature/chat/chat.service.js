@@ -28,11 +28,13 @@ const typeorm_2 = require("typeorm");
 const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const chat_list_entity_1 = require("./entities/chat_list.entity");
+const user_entity_1 = require("../auth/entities/user.entity");
 let ChatService = class ChatService {
-    constructor(chatParticipantRepo, messageRepo, chatListRepo) {
+    constructor(chatParticipantRepo, messageRepo, chatListRepo, userRepo) {
         this.chatParticipantRepo = chatParticipantRepo;
         this.messageRepo = messageRepo;
         this.chatListRepo = chatListRepo;
+        this.userRepo = userRepo;
     }
     getChatListForUser(customerId) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -107,31 +109,48 @@ let ChatService = class ChatService {
             return ((_a = participant === null || participant === void 0 ? void 0 : participant.user) === null || _a === void 0 ? void 0 : _a.notificationToken) || null;
         });
     }
-    createOrJoinChat(userA, userB) {
+    openPrivateChatRoom(userA, userB) {
         return __awaiter(this, void 0, void 0, function* () {
-            // 1. Check if a chat already exists (both directions)
-            const existing = yield this.chatListRepo.findOne({
-                where: [
-                    { user1_id: userA, user2_id: userB },
-                    { user1_id: userB, user2_id: userA },
-                ],
-            });
-            // 2. If chat exists, return its ID
-            if (existing) {
-                return { chatId: existing.id };
-            }
-            // 3. Create new chat record
-            const chat = yield this.chatListRepo.save({
+            return yield this.findOrCreatePrivateChat(userA.customer_id, userB.customer_id);
+        });
+    }
+    findOrCreatePrivateChat(userACustomerId, userBCustomerId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const [userA, userB] = [userACustomerId, userBCustomerId].sort();
+            const existingChat = yield this.chatListRepo
+                .createQueryBuilder('chat')
+                .innerJoin('chat.participants', 'participantA', 'participantA.customer_id = :userA', { userA })
+                .innerJoin('chat.participants', 'participantB', 'participantB.customer_id = :userB', { userB })
+                .where('chat.chat_type = :type', { type: 'private' })
+                .getOne();
+            if (existingChat)
+                return existingChat;
+            const savedChat = yield this.chatListRepo.save(this.chatListRepo.create({
+                chat_type: 'private',
                 user1_id: userA,
                 user2_id: userB,
-            });
-            // 4. Add both users to the chat_participants
-            yield this.chatParticipantRepo.save([
-                { chat_id: chat.id, user_id: userA },
-                { chat_id: chat.id, user_id: userB },
+                created_by: userA,
+            }));
+            // 🧠 Must load full users to assign `user: UserEntity`
+            const userAEntity = yield this.userRepo.findOne({ where: { customer_id: userA } });
+            const userBEntity = yield this.userRepo.findOne({ where: { customer_id: userB } });
+            if (!userAEntity || !userBEntity) {
+                throw new Error('One or both users not found');
+            }
+            const participants = this.chatParticipantRepo.create([
+                {
+                    chat: savedChat,
+                    user: userAEntity, // ✅ now TypeORM can set `user_id`
+                    customer_id: userAEntity.customer_id,
+                },
+                {
+                    chat: savedChat,
+                    user: userBEntity,
+                    customer_id: userBEntity.customer_id,
+                },
             ]);
-            // 5. Return new chat ID
-            return { chatId: chat.id };
+            yield this.chatParticipantRepo.save(participants);
+            return savedChat;
         });
     }
     getRecipientId(chatId, senderId) {
@@ -154,6 +173,14 @@ let ChatService = class ChatService {
             });
         });
     }
+    getMessagesByChatId(chatId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.messageRepo.find({
+                where: { chat: { id: chatId } },
+                order: { createdAt: 'ASC' },
+            });
+        });
+    }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
@@ -161,7 +188,9 @@ exports.ChatService = ChatService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipantEntity)),
     __param(1, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
     __param(2, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatListEntity)),
+    __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], ChatService);

@@ -26,21 +26,26 @@ const common_1 = require("@nestjs/common");
 const contact_service_1 = require("./contact.service");
 const create_contact_dto_1 = require("./dto/create-contact.dto");
 const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
-const base_response_1 = require("../../utils/base-response");
 let ContactController = class ContactController {
     constructor(contactService) {
         this.contactService = contactService;
     }
     addContact(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const customerId = req.user.customer_id;
-            const data = yield this.contactService.addContact(dto, customerId);
-            return new base_response_1.BaseResponse(true, 201, data, 'Contact added successfully');
+            const result = yield this.contactService.addContact(req.user, dto);
+            return {
+                status: true,
+                code: 201,
+                data: result,
+                msg: 'SUCCESS',
+                performance_ms: 72, // or calculate dynamically
+            };
         });
     }
 };
 exports.ContactController = ContactController;
 __decorate([
+    (0, common_1.Post)('add'),
     (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('add'),
     __param(0, (0, common_1.Body)()),

@@ -7,7 +7,7 @@ import {
     ManyToOne,
     JoinColumn
 } from 'typeorm';
-import {User} from '../../auth/entities/user.entity';
+import {UserEntity} from '../../auth/entities/user.entity';
 
 @Entity('engagement_identifiers')
 export class EngagementIdentifier {
@@ -44,9 +44,9 @@ export class EngagementIdentifier {
     @Column({ default: false })
     isRegistered?: boolean;
 
-    @ManyToOne(() => User, {nullable: true, onDelete: 'SET NULL'})
+    @ManyToOne(() => UserEntity, {nullable: true, onDelete: 'SET NULL'})
     @JoinColumn({name: 'customer_id', referencedColumnName: 'customer_id'})
-    user?: User;
+    user?: UserEntity;
 
     @Column({nullable: true})
     customer_id?: string;

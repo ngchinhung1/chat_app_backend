@@ -202,6 +202,12 @@ let ChatGateway = class ChatGateway {
             });
         });
     }
+    handleGetMessages(data, client) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const messages = yield this.chatService.getMessagesByChatId(data.chatId);
+            client.emit('messages_response', messages);
+        });
+    }
 };
 exports.ChatGateway = ChatGateway;
 __decorate([
@@ -263,6 +269,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleSearchMessages", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('get_messages'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleGetMessages", null);
 exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({ cors: true }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,

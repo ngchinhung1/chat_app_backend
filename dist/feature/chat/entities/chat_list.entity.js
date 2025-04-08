@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatListEntity = void 0;
 const typeorm_1 = require("typeorm");
 const message_entity_1 = require("./message.entity");
+const chat_participant_entity_1 = require("./chat_participant.entity");
 let ChatListEntity = class ChatListEntity {
 };
 exports.ChatListEntity = ChatListEntity;
@@ -20,11 +21,11 @@ __decorate([
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "user1_id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "user2_id", void 0);
 __decorate([
@@ -40,7 +41,7 @@ __decorate([
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "avatar_url", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "created_by", void 0);
 __decorate([
@@ -67,6 +68,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.chat),
     __metadata("design:type", Array)
 ], ChatListEntity.prototype, "messages", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipantEntity, (cp) => cp.chat),
+    __metadata("design:type", Array)
+], ChatListEntity.prototype, "participants", void 0);
 exports.ChatListEntity = ChatListEntity = __decorate([
     (0, typeorm_1.Entity)('chat_list')
 ], ChatListEntity);
