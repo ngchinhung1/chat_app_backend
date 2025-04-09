@@ -1,84 +1,105 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {CreateContactDto} from './dto/create-contact.dto';
-import {ChatService} from '../chat/chat.service';
 import {UserEntity} from "../auth/entities/user.entity";
 import {Contact} from "./entities/contact.entity";
+import {ChatListEntity} from "../chat/entities/chat_list.entity";
+import {ChatParticipantEntity} from "../chat/entities/chat_participant.entity";
 
 @Injectable()
 export class ContactService {
     constructor(
         @InjectRepository(Contact)
-        private readonly contactRepository: Repository<Contact>,
+        private readonly contactRepo: Repository<Contact>,
         @InjectRepository(UserEntity)
-        private readonly userRepository: Repository<UserEntity>, // make sure this is added
-
-        private readonly chatService: ChatService,
+        private readonly userRepo: Repository<UserEntity>,
+        @InjectRepository(ChatListEntity)
+        private readonly chatListRepo: Repository<ChatListEntity>,
+        @InjectRepository(ChatParticipantEntity)
+        private readonly chatParticipantRepo: Repository<ChatParticipantEntity>,
     ) {
     }
 
-    async addContact(
-        requester: UserEntity,
-        createContactDto: CreateContactDto,
-    ): Promise<any> {
-        const {phone_number, country_code, first_name, last_name} = createContactDto;
+    async addContact(ownerId: string, dto: CreateContactDto) {
+        const {country_code, phone_number, first_name, last_name} = dto;
 
-        // 1. Check if contact already exists (by phone & country for this user)
-        const existing = await this.contactRepository.findOne({
-            where: {
-                ownerId: requester.id,
-                phone_number,
-                country_code,
-            },
+        const user = await this.userRepo.findOne({
+            where: {country_code, phone_number},
         });
 
-        let newContact: Contact;
-        let chat = null;
+        if (!user) throw new NotFoundException('User not found.');
 
-        // 2. Try to find matched user in the system
-        const matchedUser = await this.userRepository.findOneBy({
-            phone_number,
-            country_code,
-        });
+        // ✅ Step 1: Reuse existing private chat if exists
+        let chat = await this.chatListRepo
+            .createQueryBuilder('chat')
+            .innerJoin('chat.participants', 'p1', 'p1.customer_id = :ownerId', {ownerId})
+            .innerJoin('chat.participants', 'p2', 'p2.customer_id = :contactId', {contactId: user.id})
+            .where('chat.chat_type = :type', {type: 'private'})
+            .getOne();
 
-        if (existing) {
-            // 3a. Update existing contact info
-            existing.first_name = first_name;
-            existing.last_name = last_name;
-            existing.customer_id = matchedUser?.customer_id || existing.customer_id;
-            newContact = await this.contactRepository.save(existing);
+        // ✅ Step 2: Create chat if not found
+        if (!chat) {
+            chat = this.chatListRepo.create({chat_type: 'private'});
+            await this.chatListRepo.save(chat);
 
-            // 4a. If matched user exists, create/join private chat
-            if (matchedUser) {
-                chat = await this.chatService.findOrCreatePrivateChat(
-                    requester.customer_id,
-                    matchedUser.customer_id,
-                );
-            }
-        } else {
-            // 3b. Create new contact
-            newContact = this.contactRepository.create({
-                ...createContactDto,
-                ownerId: requester.id,
-                customer_id: matchedUser?.customer_id,
-            });
+            const owner = await this.userRepo.findOneBy({id: ownerId});
+            if (!owner) throw new NotFoundException('Owner not found');
 
-            // 4b. If matched user exists, create/join private chat
-            if (matchedUser) {
-                chat = await this.chatService.findOrCreatePrivateChat(
-                    requester.customer_id,
-                    matchedUser.customer_id,
-                );
-            }
-
-            await this.contactRepository.save(newContact);
+            const participants = [
+                this.chatParticipantRepo.create({
+                    chat,
+                    user: owner,
+                    customer_id: owner.id,
+                    role: 'member',
+                    joined_at: new Date(),
+                }),
+                this.chatParticipantRepo.create({
+                    chat,
+                    user,
+                    customer_id: user.id,
+                    role: 'member',
+                    joined_at: new Date(),
+                }),
+            ];
+            await this.chatParticipantRepo.save(participants);
         }
 
-        // 5. Return contact with optional chatId
+        // ✅ Step 3: Update or Create contact
+        let contact = await this.contactRepo.findOne({
+            where: {
+                owner: {id: ownerId},
+                country_code,
+                phone_number,
+            },
+            relations: ['owner'],
+        });
+
+        if (contact) {
+            contact.first_name = first_name;
+            contact.last_name = last_name;
+            contact.customer_id = user.customer_id;
+        } else {
+            contact = this.contactRepo.create({
+                owner: {id: ownerId},
+                customer_id: user.customer_id,
+                first_name,
+                last_name,
+                country_code,
+                phone_number,
+            });
+        }
+
+        await this.contactRepo.save(contact);
+
         return {
-            ...newContact,
-            chatId: chat?.id || null,
+            chatId: chat.id,
+            first_name,
+            last_name,
+            country_code,
+            phone_number,
+            user_id: user.id.toString(),
+            customer_id: user.customer_id,
         };
     }
 }

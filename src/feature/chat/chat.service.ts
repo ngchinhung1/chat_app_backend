@@ -70,21 +70,48 @@ export class ChatService {
     }
 
     async saveMessage(data: {
-        chatId: string;
+        chat_id: string,
+        sender_id: string,
+        content: string,
+        file_type?: string,
+        status?: string,
+        customer_id?: string,
+        attachment_url?: string,
+        voice_url?: string,
+    }): Promise<{
+        id: string;
+        chat_id: string;
+        sender_id: string;
+        chat: ChatListEntity;
+        senderCustomerId?: string;
+        sender?: UserEntity;
         content?: string;
-        voiceUrl?: string;
-        fileType?: string;
-        senderCustomerId: string;
-    }): Promise<MessageEntity> {
+        createdAt: Date;
+        file_type?: string;
+        attachment_url?: string;
+        voice_url?: string;
+        read_at?: Date | null;
+        status: string
+    }> {
         const message = this.messageRepo.create({
-            chat_id: data.chatId,
+            chat: {id: data.chat_id},
+            sender_id: data.sender_id,
+            senderCustomerId: data.customer_id,
             content: data.content,
-            voice_url: data.voiceUrl,
-            file_type: data.fileType,
-            senderCustomerId: data.senderCustomerId,
+            createdAt: new Date(),
+            file_type: data.file_type,
+            attachment_url: data.attachment_url,
+            voice_url: data.voice_url,
         });
+        await this.messageRepo.save(message);
 
-        return await this.messageRepo.save(message);
+        await this.chatListRepo.update(data.chat_id, {lastMessageAt: new Date()});
+
+        return {
+            ...message,
+            status: 'sent',
+            read_at: new Date(),
+        };
     }
 
     async markMessageAsRead(messageId: string, readAt: Date): Promise<void> {
@@ -183,9 +210,9 @@ export class ChatService {
         });
     }
 
-    async getMessagesByChatId(chatId: string): Promise<MessageEntity[]> {
+    async getMessages(chatId: string) {
         return this.messageRepo.find({
-            where: {chat: {id: chatId}},
+            where: {chat_id: chatId},
             order: {createdAt: 'ASC'},
         });
     }

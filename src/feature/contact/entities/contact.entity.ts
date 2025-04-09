@@ -1,15 +1,25 @@
-import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn} from "typeorm";
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
+} from "typeorm";
+import {UserEntity} from "../../auth/entities/user.entity";
 
 @Entity('contacts')
 export class Contact {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column({ nullable: true })
+    @Column({nullable: true})
     customer_id?: string;
 
-    @Column({ nullable: true })
-    ownerId?: string;
+    @ManyToOne(() => UserEntity)
+    @JoinColumn({ name: 'ownerId' })
+    owner!: UserEntity;
 
     @Column()
     first_name?: string;
@@ -25,4 +35,7 @@ export class Contact {
 
     @CreateDateColumn()
     created_at!: Date;
+
+    @UpdateDateColumn()
+    updated_at!: Date;
 }

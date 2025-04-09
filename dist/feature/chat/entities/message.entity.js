@@ -21,13 +21,15 @@ __decorate([
     __metadata("design:type", String)
 ], MessageEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)({ name: 'chat_id' }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "chat_id", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.messages, {
-        onDelete: 'CASCADE',
-    }),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], MessageEntity.prototype, "sender_id", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, { nullable: false }),
     (0, typeorm_1.JoinColumn)({ name: 'chat_id' }),
     __metadata("design:type", chat_list_entity_1.ChatListEntity)
 ], MessageEntity.prototype, "chat", void 0);
@@ -43,11 +45,11 @@ __decorate([
     __metadata("design:type", user_entity_1.UserEntity)
 ], MessageEntity.prototype, "sender", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
+    (0, typeorm_1.Column)({ type: 'text' }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "content", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)(),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamp' }),
     __metadata("design:type", Date)
 ], MessageEntity.prototype, "createdAt", void 0);
 __decorate([
@@ -63,8 +65,8 @@ __decorate([
     __metadata("design:type", String)
 ], MessageEntity.prototype, "voice_url", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", Date)
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
+    __metadata("design:type", Object)
 ], MessageEntity.prototype, "read_at", void 0);
 exports.MessageEntity = MessageEntity = __decorate([
     (0, typeorm_1.Entity)('message')

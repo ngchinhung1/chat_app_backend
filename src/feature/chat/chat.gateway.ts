@@ -9,16 +9,14 @@ import {Server, Socket} from 'socket.io';
 import {ChatService} from './chat.service';
 import {SendMessageDto} from "./dto/send-message.dto";
 import {FcmService} from "../../fcm/fcm.service";
-import {UseGuards} from "@nestjs/common";
-import {JwtWsAuthGuard} from "../../config/guards/jwtWsAuth.guard";
 
 @WebSocketGateway({cors: true})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
-    @WebSocketServer() server: Server | undefined;
+    @WebSocketServer() server!: Server;
     private connectedClients = new Map<string, Socket>();
 
     constructor(
-        private readonly chatService: ChatService,
+        private chatService: ChatService,
         private readonly fcmService: FcmService
     ) {
     }
@@ -57,143 +55,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         return this.connectedClients.get(<string>userId);
     }
 
-    @SubscribeMessage('chat_list')
-    async handleChatList(client: Socket) {
-        const user = client.data.user;
-
-        const chatList = await this.chatService.getChatListForUser(user.customer_id);
-
+    @SubscribeMessage('chat_listing')
+    async handleChatList(@MessageBody() data: { customer_id: string }, @ConnectedSocket() client: Socket) {
+        const chatList = await this.chatService.getChatListForUser(data.customer_id);
         client.emit('chat_list', chatList);
     }
 
     @SubscribeMessage('send_message')
-    async handleSendMessage(
-        @ConnectedSocket() client: Socket,
-        @MessageBody() data: SendMessageDto,
-    ) {
-
-        const newMessage = await this.chatService.saveMessage({
-            chatId: data.chat_id,
-            content: data.text,
-            voiceUrl: data.voiceUrl,
-            fileType: data.file_type,
-            senderCustomerId: data.customer_id,
-        });
-
-        // Emit the new message to all in the room
-        this.server?.to(data.chat_id).emit('new_message', {
-            chatId: data.chat_id,
-            message: {
-                id: newMessage.id,
-                content: newMessage.content,
-                voiceUrl: newMessage.voice_url || null,
-                senderCustomerId: data.customer_id,
-                createdAt: newMessage.createdAt,
-            },
-        });
-
-        // ✅ Emit chat_list_update to sender (unreadCount = 0)
-        client.emit('chat_list_update', {
-            chatId: data.chat_id,
-            lastMessage: newMessage.content,
-            unreadCount: 0,
-            updatedAt: new Date().toISOString(),
-        });
-
-        // ✅ Get recipient socket(s)
-        const room = this.server!.sockets.adapter.rooms.get(data.chat_id);
-        const isRecipientOnline: boolean = (room?.size ?? 0) > 1;
-
-        // Get recipient ID and socket ID
-        const recipientId = await this.chatService.getRecipientId(data.chat_id, data.customer_id);
-        const recipientSocket = this.getSocketByUserId(recipientId);
-
-        // ✅ Emit chat_list_update to recipient if online
-        if (recipientSocket) {
-            recipientSocket.emit('chat_list_update', {
-                chatId: data.chat_id,
-                lastMessage: newMessage.content,
-                unreadCount: 1,
-                updatedAt: new Date().toISOString(),
-            });
-        }
-
-        // ✅ If recipient is offline, send FCM push
-        try {
-            if (!isRecipientOnline) {
-                const recipientDeviceToken = await this.chatService.getRecipientDeviceToken(
-                    data.chat_id,
-                    data.customer_id,
-                );
-
-                if (recipientDeviceToken) {
-                    await this.fcmService.send({
-                        token: recipientDeviceToken,
-                        notification: {
-                            title: `New message`,
-                            body: newMessage.content,
-                        },
-                        data: {
-                            chatId: data.chat_id,
-                            type: 'chat',
-                        },
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error sending FCM push notification:', error);
-        }
-
-        return {
-            id: newMessage.id,
-            status: 'sent',
-            timestamp: newMessage.createdAt,
-        };
+    async handleSendMessage(@MessageBody() data: {
+        chat_id: string,
+        sender_id: string,
+        content: string,
+        file_type?: string,
+        status?: string,
+        customer_id?: string,
+        attachment_url?: string,
+        voice_url?: string,
+    }) {
+        const message = await this.chatService.saveMessage(data);
+        this.server.to(data.chat_id).emit('new_message', message);
+        return message; // Acknowledgement back to sender
     }
 
     @SubscribeMessage('join_room')
-    async handleJoinRoom(
-        @MessageBody() data: { chatId: string; type: 'private' | 'group' },
-        @ConnectedSocket() client: Socket,
-    ) {
-        const {chatId, type} = data;
-        const user = client.data.user;
-
-        if (!chatId || !type) {
-            return client.emit('error', {
-                message: 'chatId and type are required.',
-            });
-        }
-
-        // Get rooms joined by the client
-        const rooms = [...client.rooms];
-
-        // Check if already joined
-        if (rooms.includes(chatId)) {
-            return client.emit('already_joined', {
-                chatId,
-                type,
-                message: `Already joined ${type} chat room.`,
-            });
-        }
-
-        // Join the chat room
-        client.join(chatId);
-
-        // Broadcast or confirm
-        client.emit('joined_room', {
-            chatId,
-            type,
-            message: `Successfully joined ${type} chat room.`,
-        });
-
-        // Optional: Notify other participants if it's a group
-        if (type === 'group') {
-            client.to(chatId).emit('user_joined', {
-                chatId,
-                userId: user.customer_id,
-            });
-        }
+    handleJoinRoom(@MessageBody() data: { chatId: string }, @ConnectedSocket() client: Socket) {
+        client.join(data.chatId);
+        client.emit('joined_room', {chatId: data.chatId});
     }
 
     @SubscribeMessage('leave_room')
@@ -279,12 +166,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
 
     @SubscribeMessage('get_messages')
-    async handleGetMessages(
-        @MessageBody() data: { chatId: string },
-        @ConnectedSocket() client: Socket
-    ) {
-        const messages = await this.chatService.getMessagesByChatId(data.chatId);
-        client.emit('messages_response', messages);
+    async handleGetMessages(@MessageBody() data: { chatId: string }, @ConnectedSocket() client: Socket) {
+        const messages = await this.chatService.getMessages(data.chatId);
+        client.emit('get_messages', messages);
     }
 
 }

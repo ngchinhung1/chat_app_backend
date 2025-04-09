@@ -8,17 +8,16 @@ export class ContactController {
     constructor(private readonly contactService: ContactService) {
     }
 
-    @Post('add')
+    @Post('/add')
     @UseGuards(JwtAuthGuard)
-    @Post('add')
     async addContact(@Body() dto: CreateContactDto, @Req() req: any) {
-        const result = await this.contactService.addContact(req.user, dto);
+        const ownerId = req.user.customer_id;
+        const result = await this.contactService.addContact(ownerId, dto);
         return {
             status: true,
-            code: 201,
+            code: 200,
             data: result,
             msg: 'SUCCESS',
-            performance_ms: 72, // or calculate dynamically
         };
     }
 }

@@ -32,22 +32,21 @@ let ContactController = class ContactController {
     }
     addContact(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this.contactService.addContact(req.user, dto);
+            const ownerId = req.user.customer_id;
+            const result = yield this.contactService.addContact(ownerId, dto);
             return {
                 status: true,
-                code: 201,
+                code: 200,
                 data: result,
                 msg: 'SUCCESS',
-                performance_ms: 72, // or calculate dynamically
             };
         });
     }
 };
 exports.ContactController = ContactController;
 __decorate([
-    (0, common_1.Post)('add'),
+    (0, common_1.Post)('/add'),
     (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)('add'),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),

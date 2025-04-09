@@ -10,11 +10,11 @@ export class ChatParticipantEntity {
     @Column()
     chat_id?: string;
 
-    @Column()
-    user_id?: string;
+    @Column({name: 'user_id'})
+    user_id!: string;
 
-    @Column()
-    customer_id?: string;
+    @Column({name: 'customer_id', nullable: false})
+    customer_id!: string;
 
     @Column({default: 'member'})
     role?: 'admin' | 'member';
@@ -31,15 +31,15 @@ export class ChatParticipantEntity {
     @Column({type: 'timestamp', nullable: true})
     last_read_at!: Date;
 
-    @CreateDateColumn()
+    @CreateDateColumn({type: 'timestamp'})
     joined_at!: Date;
 
-    @ManyToOne(() => ChatListEntity, (chat) => chat.participants, {onDelete: 'CASCADE'})
+    @ManyToOne(() => ChatListEntity, chat => chat.participants, {nullable: false})
     @JoinColumn({name: 'chat_id'})
-    chat?: ChatListEntity;
+    chat!: ChatListEntity;
 
-    @ManyToOne(() => UserEntity, {onDelete: 'CASCADE'})
+    @ManyToOne(() => UserEntity, {eager: false, nullable: false})
     @JoinColumn({name: 'user_id'})
-    user?: UserEntity;
+    user!: UserEntity;
 
 }

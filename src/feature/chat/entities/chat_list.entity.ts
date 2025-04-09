@@ -1,4 +1,4 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany} from 'typeorm';
+import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index} from 'typeorm';
 import {MessageEntity} from "./message.entity";
 import {ChatParticipantEntity} from "./chat_participant.entity";
 
@@ -25,11 +25,15 @@ export class ChatListEntity {
     @Column({ nullable: true })
     created_by?: string;
 
-    @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+    @CreateDateColumn({ type: 'timestamp' })
     created_at!: Date;
 
-    @UpdateDateColumn()
+    @UpdateDateColumn({ type: 'timestamp' })
     updated_at!: Date;
+
+    @Index()
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    lastMessageAt!: Date;
 
     @Column({nullable: true})
     last_message_id?: string;

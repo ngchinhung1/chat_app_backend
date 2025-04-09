@@ -15,15 +15,16 @@ export class MessageEntity {
     id!: string;
 
     // Foreign key for chat
+    @Column({name: 'chat_id'})
+    chat_id!: string;
+
     @Column()
-    chat_id?: string;
+    sender_id!: string;
 
     // Relation to ChatListEntity
-    @ManyToOne(() => ChatListEntity, (chat) => chat.messages, {
-        onDelete: 'CASCADE',
-    })
+    @ManyToOne(() => ChatListEntity, {nullable: false})
     @JoinColumn({name: 'chat_id'})
-    chat?: ChatListEntity;
+    chat!: ChatListEntity;
 
     // Foreign key for sender (customer_id)
     @Column()
@@ -37,11 +38,11 @@ export class MessageEntity {
     sender?: UserEntity;
 
     // Message text content
-    @Column({nullable: true})
+    @Column({type: 'text'})
     content?: string;
 
     // Timestamp of message creation
-    @CreateDateColumn()
+    @CreateDateColumn({type: 'timestamp'})
     createdAt!: Date;
 
     @Column({nullable: true})
@@ -53,7 +54,7 @@ export class MessageEntity {
     @Column({nullable: true})
     voice_url?: string;
 
-    @Column({nullable: true})
-    read_at!: Date;
+    @Column({type: 'timestamp', nullable: true})
+    read_at?: Date | null;
 
 }

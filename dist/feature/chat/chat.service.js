@@ -83,13 +83,18 @@ let ChatService = class ChatService {
     saveMessage(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const message = this.messageRepo.create({
-                chat_id: data.chatId,
+                chat: { id: data.chat_id },
+                sender_id: data.sender_id,
+                senderCustomerId: data.customer_id,
                 content: data.content,
-                voice_url: data.voiceUrl,
-                file_type: data.fileType,
-                senderCustomerId: data.senderCustomerId,
+                createdAt: new Date(),
+                file_type: data.file_type,
+                attachment_url: data.attachment_url,
+                voice_url: data.voice_url,
             });
-            return yield this.messageRepo.save(message);
+            yield this.messageRepo.save(message);
+            yield this.chatListRepo.update(data.chat_id, { lastMessageAt: new Date() });
+            return Object.assign(Object.assign({}, message), { status: 'sent', read_at: new Date() });
         });
     }
     markMessageAsRead(messageId, readAt) {
@@ -179,10 +184,10 @@ let ChatService = class ChatService {
             });
         });
     }
-    getMessagesByChatId(chatId) {
+    getMessages(chatId) {
         return __awaiter(this, void 0, void 0, function* () {
             return this.messageRepo.find({
-                where: { chat: { id: chatId } },
+                where: { chat_id: chatId },
                 order: { createdAt: 'ASC' },
             });
         });
