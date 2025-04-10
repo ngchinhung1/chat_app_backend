@@ -8,7 +8,7 @@ export class SendMessageDto {
     sender_id?: string;
 
     @IsString()
-    text?: string;
+    content?: string;
 
     @IsOptional()
     @IsString()

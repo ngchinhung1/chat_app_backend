@@ -29,26 +29,34 @@ const user_entity_1 = require("../auth/entities/user.entity");
 const contact_entity_1 = require("./entities/contact.entity");
 const chat_list_entity_1 = require("../chat/entities/chat_list.entity");
 const chat_participant_entity_1 = require("../chat/entities/chat_participant.entity");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let ContactService = class ContactService {
-    constructor(contactRepo, userRepo, chatListRepo, chatParticipantRepo) {
+    constructor(contactRepo, userRepo, chatListRepo, chatParticipantRepo, i18n) {
         this.contactRepo = contactRepo;
         this.userRepo = userRepo;
         this.chatListRepo = chatListRepo;
         this.chatParticipantRepo = chatParticipantRepo;
+        this.i18n = i18n;
     }
-    addContact(ownerId, dto) {
+    addContact(ownerId, dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
             const { country_code, phone_number, first_name, last_name } = dto;
             const user = yield this.userRepo.findOne({
                 where: { country_code, phone_number },
             });
-            if (!user)
-                throw new common_1.NotFoundException('User not found.');
+            if (!user) {
+                throw new common_1.HttpException({
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                    code: 400,
+                    data: {},
+                }, 400);
+            }
             // ✅ Step 1: Reuse existing private chat if exists
             let chat = yield this.chatListRepo
                 .createQueryBuilder('chat')
                 .innerJoin('chat.participants', 'p1', 'p1.customer_id = :ownerId', { ownerId })
-                .innerJoin('chat.participants', 'p2', 'p2.customer_id = :contactId', { contactId: user.id })
+                .innerJoin('chat.participants', 'p2', 'p2.customer_id = :contactId', { contactId: user.customer_id })
                 .where('chat.chat_type = :type', { type: 'private' })
                 .getOne();
             // ✅ Step 2: Create chat if not found
@@ -62,14 +70,14 @@ let ContactService = class ContactService {
                     this.chatParticipantRepo.create({
                         chat,
                         user: owner,
-                        customer_id: owner.id,
+                        customer_id: owner.customer_id,
                         role: 'member',
                         joined_at: new Date(),
                     }),
                     this.chatParticipantRepo.create({
                         chat,
                         user,
-                        customer_id: user.id,
+                        customer_id: user.customer_id,
                         role: 'member',
                         joined_at: new Date(),
                     }),
@@ -92,7 +100,7 @@ let ContactService = class ContactService {
             }
             else {
                 contact = this.contactRepo.create({
-                    owner: { id: ownerId },
+                    owner: { customer_id: ownerId },
                     customer_id: user.customer_id,
                     first_name,
                     last_name,
@@ -112,6 +120,22 @@ let ContactService = class ContactService {
             };
         });
     }
+    matchContacts(contacts) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const formatted = contacts.map(c => `${c.countryCode}${c.phoneNumber}`);
+            const found = yield this.contactRepo
+                .createQueryBuilder('contact')
+                .where(`CONCAT(contact.country_code, contact.phone_number) IN (:...formatted)`, { formatted })
+                .getMany();
+            return found.map(c => ({
+                firstName: c.first_name,
+                lastName: c.last_name,
+                phoneNumber: c.phone_number,
+                countryCode: c.country_code,
+                customerId: c.customer_id,
+            }));
+        });
+    }
 };
 exports.ContactService = ContactService;
 exports.ContactService = ContactService = __decorate([
@@ -123,5 +147,6 @@ exports.ContactService = ContactService = __decorate([
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        _i18n_service_1.I18nService])
 ], ContactService);

@@ -21,13 +21,13 @@ __decorate([
     __metadata("design:type", String)
 ], ChatParticipantEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], ChatParticipantEntity.prototype, "chat_id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'user_id' }),
+    (0, typeorm_1.Column)({ type: 'uuid' }),
     __metadata("design:type", String)
 ], ChatParticipantEntity.prototype, "user_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid' }),
+    __metadata("design:type", String)
+], ChatParticipantEntity.prototype, "chat_id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ name: 'customer_id', nullable: false }),
     __metadata("design:type", String)
@@ -57,7 +57,7 @@ __decorate([
     __metadata("design:type", Date)
 ], ChatParticipantEntity.prototype, "joined_at", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, chat => chat.participants, { nullable: false }),
+    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.participants),
     (0, typeorm_1.JoinColumn)({ name: 'chat_id' }),
     __metadata("design:type", chat_list_entity_1.ChatListEntity)
 ], ChatParticipantEntity.prototype, "chat", void 0);

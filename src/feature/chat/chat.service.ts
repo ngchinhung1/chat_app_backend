@@ -5,6 +5,7 @@ import {ChatParticipantEntity} from "./entities/chat_participant.entity";
 import {MessageEntity} from "./entities/message.entity";
 import {ChatListEntity} from "./entities/chat_list.entity";
 import {UserEntity} from "../auth/entities/user.entity";
+import {SendMessageDto} from "./dto/send-message.dto";
 
 @Injectable()
 export class ChatService {
@@ -21,11 +22,16 @@ export class ChatService {
     }
 
     async getChatListForUser(customerId: string): Promise<any[]> {
+        console.log('[getChatListForUser] fetching chat list for:', customerId);
         const participants = await this.chatParticipantRepo.find({
-            where: {user_id: customerId, is_deleted: false},
+            where: {customer_id: customerId, is_deleted: false},
             relations: ['chat'],
             order: {joined_at: 'DESC'},
         });
+
+        console.log('[getChatListForUser] found participants:', participants.length);
+        // If this returns [], no chat will be shown
+        if (!participants.length) return [];
 
         const chatList = await Promise.all(
             participants.map(async (p) => {
@@ -69,48 +75,80 @@ export class ChatService {
         return chatList.filter(Boolean);
     }
 
-    async saveMessage(data: {
-        chat_id: string,
-        sender_id: string,
-        content: string,
-        file_type?: string,
-        status?: string,
-        customer_id?: string,
-        attachment_url?: string,
-        voice_url?: string,
-    }): Promise<{
-        id: string;
-        chat_id: string;
-        sender_id: string;
-        chat: ChatListEntity;
-        senderCustomerId?: string;
-        sender?: UserEntity;
-        content?: string;
-        createdAt: Date;
-        file_type?: string;
-        attachment_url?: string;
-        voice_url?: string;
-        read_at?: Date | null;
-        status: string
-    }> {
-        const message = this.messageRepo.create({
-            chat: {id: data.chat_id},
-            sender_id: data.sender_id,
-            senderCustomerId: data.customer_id,
-            content: data.content,
-            createdAt: new Date(),
-            file_type: data.file_type,
-            attachment_url: data.attachment_url,
-            voice_url: data.voice_url,
-        });
-        await this.messageRepo.save(message);
+    async sendMessage(sendBy: string, sendMessageDto: SendMessageDto) {
+        const {chat_id, content} = sendMessageDto;
 
-        await this.chatListRepo.update(data.chat_id, {lastMessageAt: new Date()});
+        // Check if chat already exists between these participants
+        let chat = await this.chatListRepo.createQueryBuilder('chat')
+            .leftJoin('chat.participants', 'participant')
+            .where('participant.userId IN (:...userIds)', {userIds: [sendBy, chat_id]})
+            .groupBy('chat.id')
+            .having('COUNT(DISTINCT participant.userId) = 2') // ensures exactly two participants
+            .getOne();
+
+        if (!chat) {
+            chat = this.chatListRepo.create({
+                participants: [
+                    this.chatParticipantRepo.create({user_id: sendBy.toString()}),
+                    this.chatParticipantRepo.create({user_id: chat_id.toString()}),
+                ],
+                last_message: content,
+                lastMessageAt: new Date(),
+                created_at: new Date(),
+                updated_at: new Date(),
+            });
+            await this.chatListRepo.save(chat);
+        } else {
+            chat.last_message = content;
+            chat.lastMessageAt = new Date();
+            chat.updated_at = new Date();
+            await this.chatListRepo.save(chat);
+        }
+
+        // Save the message with the chat id
+        const message = this.messageRepo.create({
+            chat_id: chat.id.toString(),
+            send_by: sendBy.toString(),
+            content: content,
+            createdAt: new Date(),
+        });
+
+        await this.messageRepo.save(message);
 
         return {
             ...message,
             status: 'sent',
             read_at: new Date(),
+        };
+    }
+
+    async getOtherParticipant(chatId: string, sendBy: string): Promise<string> {
+        const chat = await this.chatListRepo.findOne({
+            where: {id: chatId},
+            relations: ['participants'],
+        });
+
+        if (!chat) throw new Error('Chat not found');
+
+        const receiver = chat.participants.find(p => p.user_id !== sendBy);
+        if (!receiver) throw new Error('Receiver not found');
+
+        return receiver.user_id;
+    }
+
+    async getChatListItem(userId: string, chatId: string) {
+        const chat = await this.chatListRepo.findOne({
+            where: {id: chatId},
+            relations: ['participants'],
+        });
+
+        if (!chat) throw new Error('Chat not found');
+
+        return {
+            chatId: chat.id,
+            name: chat.title ?? '',
+            lastMessage: chat.last_message ?? '',
+            updatedAt: chat.lastMessageAt?.toISOString() ?? '',
         };
     }
 
@@ -128,11 +166,11 @@ export class ChatService {
         );
     }
 
-    async getRecipientDeviceToken(chatId: string, senderId: string): Promise<string | null> {
+    async getRecipientDeviceToken(chatId: string, sendBy: string): Promise<string | null> {
         const participant: ChatParticipantEntity | null = await this.chatParticipantRepo.findOne({
             where: {
                 chat_id: chatId,
-                user_id: Not(senderId),
+                user_id: Not(sendBy),
             },
             relations: ['user'],
         });
@@ -191,12 +229,12 @@ export class ChatService {
         return savedChat;
     }
 
-    async getRecipientId(chatId: string, senderId: string): Promise<string | null> {
+    async getRecipientId(chatId: string, sendBy: string): Promise<string | null> {
         const participants = await this.chatParticipantRepo.find({
             where: {chat_id: chatId},
         });
 
-        const recipient = participants.find(p => p.user_id !== senderId);
+        const recipient = participants.find(p => p.user_id !== sendBy);
         return recipient?.user_id || null;
     }
 

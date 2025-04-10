@@ -14,15 +14,13 @@ export class MessageEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    // Foreign key for chat
-    @Column({name: 'chat_id'})
+    @Column()
+    send_by!: string;
+
+    @Column({type: 'uuid'})
     chat_id!: string;
 
-    @Column()
-    sender_id!: string;
-
-    // Relation to ChatListEntity
-    @ManyToOne(() => ChatListEntity, {nullable: false})
+    @ManyToOne(() => ChatListEntity, (chat) => chat.messages)
     @JoinColumn({name: 'chat_id'})
     chat!: ChatListEntity;
 

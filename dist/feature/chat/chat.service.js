@@ -38,11 +38,16 @@ let ChatService = class ChatService {
     }
     getChatListForUser(customerId) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log('[getChatListForUser] fetching chat list for:', customerId);
             const participants = yield this.chatParticipantRepo.find({
-                where: { user_id: customerId, is_deleted: false },
+                where: { customer_id: customerId, is_deleted: false },
                 relations: ['chat'],
                 order: { joined_at: 'DESC' },
             });
+            console.log('[getChatListForUser] found participants:', participants.length);
+            // If this returns [], no chat will be shown
+            if (!participants.length)
+                return [];
             const chatList = yield Promise.all(participants.map((p) => __awaiter(this, void 0, void 0, function* () {
                 const chat = p.chat;
                 if (!chat)
@@ -80,21 +85,75 @@ let ChatService = class ChatService {
             return chatList.filter(Boolean);
         });
     }
-    saveMessage(data) {
+    sendMessage(sendBy, sendMessageDto) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { chat_id, content } = sendMessageDto;
+            // Check if chat already exists between these participants
+            let chat = yield this.chatListRepo.createQueryBuilder('chat')
+                .leftJoin('chat.participants', 'participant')
+                .where('participant.userId IN (:...userIds)', { userIds: [sendBy, chat_id] })
+                .groupBy('chat.id')
+                .having('COUNT(DISTINCT participant.userId) = 2') // ensures exactly two participants
+                .getOne();
+            if (!chat) {
+                chat = this.chatListRepo.create({
+                    participants: [
+                        this.chatParticipantRepo.create({ user_id: sendBy.toString() }),
+                        this.chatParticipantRepo.create({ user_id: chat_id.toString() }),
+                    ],
+                    last_message: content,
+                    lastMessageAt: new Date(),
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                });
+                yield this.chatListRepo.save(chat);
+            }
+            else {
+                chat.last_message = content;
+                chat.lastMessageAt = new Date();
+                chat.updated_at = new Date();
+                yield this.chatListRepo.save(chat);
+            }
+            // Save the message with the chat id
             const message = this.messageRepo.create({
-                chat: { id: data.chat_id },
-                sender_id: data.sender_id,
-                senderCustomerId: data.customer_id,
-                content: data.content,
+                chat_id: chat.id.toString(),
+                send_by: sendBy.toString(),
+                content: content,
                 createdAt: new Date(),
-                file_type: data.file_type,
-                attachment_url: data.attachment_url,
-                voice_url: data.voice_url,
             });
             yield this.messageRepo.save(message);
-            yield this.chatListRepo.update(data.chat_id, { lastMessageAt: new Date() });
             return Object.assign(Object.assign({}, message), { status: 'sent', read_at: new Date() });
+        });
+    }
+    getOtherParticipant(chatId, sendBy) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const chat = yield this.chatListRepo.findOne({
+                where: { id: chatId },
+                relations: ['participants'],
+            });
+            if (!chat)
+                throw new Error('Chat not found');
+            const receiver = chat.participants.find(p => p.user_id !== sendBy);
+            if (!receiver)
+                throw new Error('Receiver not found');
+            return receiver.user_id;
+        });
+    }
+    getChatListItem(userId, chatId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c, _d;
+            const chat = yield this.chatListRepo.findOne({
+                where: { id: chatId },
+                relations: ['participants'],
+            });
+            if (!chat)
+                throw new Error('Chat not found');
+            return {
+                chatId: chat.id,
+                name: (_a = chat.title) !== null && _a !== void 0 ? _a : '',
+                lastMessage: (_b = chat.last_message) !== null && _b !== void 0 ? _b : '',
+                updatedAt: (_d = (_c = chat.lastMessageAt) === null || _c === void 0 ? void 0 : _c.toISOString()) !== null && _d !== void 0 ? _d : '',
+            };
         });
     }
     markMessageAsRead(messageId, readAt) {
@@ -107,13 +166,13 @@ let ChatService = class ChatService {
             yield this.chatParticipantRepo.update({ chat_id: chatId, user_id: userId }, { last_read_at: new Date() });
         });
     }
-    getRecipientDeviceToken(chatId, senderId) {
+    getRecipientDeviceToken(chatId, sendBy) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
             const participant = yield this.chatParticipantRepo.findOne({
                 where: {
                     chat_id: chatId,
-                    user_id: (0, typeorm_2.Not)(senderId),
+                    user_id: (0, typeorm_2.Not)(sendBy),
                 },
                 relations: ['user'],
             });
@@ -164,12 +223,12 @@ let ChatService = class ChatService {
             return savedChat;
         });
     }
-    getRecipientId(chatId, senderId) {
+    getRecipientId(chatId, sendBy) {
         return __awaiter(this, void 0, void 0, function* () {
             const participants = yield this.chatParticipantRepo.find({
                 where: { chat_id: chatId },
             });
-            const recipient = participants.find(p => p.user_id !== senderId);
+            const recipient = participants.find(p => p.user_id !== sendBy);
             return (recipient === null || recipient === void 0 ? void 0 : recipient.user_id) || null;
         });
     }

@@ -3,15 +3,26 @@ import {
     WebSocketGateway,
     WebSocketServer,
     OnGatewayConnection,
-    OnGatewayDisconnect, ConnectedSocket, MessageBody, OnGatewayInit
+    OnGatewayDisconnect, ConnectedSocket, MessageBody, OnGatewayInit, WsException
 } from '@nestjs/websockets';
 import {Server, Socket} from 'socket.io';
 import {ChatService} from './chat.service';
 import {SendMessageDto} from "./dto/send-message.dto";
 import {FcmService} from "../../fcm/fcm.service";
+import {MiddlewareConsumer, NestModule, UseGuards} from "@nestjs/common";
+import {AuthenticatedSocket} from "../../middleware/authenticated-socket.interface";
+import {socketAuthMiddleware} from "../../middleware/socketAuthMiddleware";
+import {JwtWsAuthGuard} from "../../config/guards/jwtWsAuth.guard";
 
+@UseGuards(JwtWsAuthGuard)
 @WebSocketGateway({cors: true})
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(socketAuthMiddleware)
+            .forRoutes(ChatGateway);
+    }
+
     @WebSocketServer() server!: Server;
     private connectedClients = new Map<string, Socket>();
 
@@ -36,6 +47,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
     // 🔌 Track connections
     handleConnection(client: Socket) {
+        console.log('✅ Client connected:', client.id, client.user?.customer_id);
         const user = client.data.user;
         if (user?.customer_id) {
             this.connectedClients.set(user.customer_id, client);
@@ -56,31 +68,58 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
 
     @SubscribeMessage('chat_listing')
-    async handleChatList(@MessageBody() data: { customer_id: string }, @ConnectedSocket() client: Socket) {
-        const chatList = await this.chatService.getChatListForUser(data.customer_id);
+    handleChatListing(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+        console.log('📨 received chat_listing:', data);
+
+        const chatList = [
+            {
+                chatId: '1',
+                title: 'Support Chat',
+                last_message: 'Hello there',
+                last_message_at: new Date().toISOString(),
+            },
+            {
+                chatId: '2',
+                title: 'General Group',
+                last_message: 'How are you?',
+                last_message_at: new Date().toISOString(),
+            },
+        ];
+        console.log('📤 sending chat_list:', chatList);
         client.emit('chat_list', chatList);
     }
 
     @SubscribeMessage('send_message')
-    async handleSendMessage(@MessageBody() data: {
-        chat_id: string,
-        sender_id: string,
-        content: string,
-        file_type?: string,
-        status?: string,
-        customer_id?: string,
-        attachment_url?: string,
-        voice_url?: string,
-    }) {
-        const message = await this.chatService.saveMessage(data);
+    async handleSendMessage(
+        @ConnectedSocket() client: AuthenticatedSocket,
+        @MessageBody() data: SendMessageDto
+    ) {
+        const senderCustomerId = client.user.customer_id ?? null;
+
+        // ✅ Use your existing service method
+        const message = await this.chatService.sendMessage(senderCustomerId, data);
+
+        // 🔥 Emit to the room so the receiver gets the new message
         this.server.to(data.chat_id).emit('new_message', message);
-        return message; // Acknowledgement back to sender
+
+        // ✅ Use your own method to get the chat list item to refresh receiver UI
+        const receiverId = await this.chatService.getOtherParticipant(data.chat_id, senderCustomerId);
+        const updatedChatListItem = await this.chatService.getChatListItem(receiverId, data.chat_id);
+
+        // 🎯 Emit real-time update to receiver’s chat list
+        this.server.to(`user_${receiverId}`).emit('chat_list_update', updatedChatListItem);
+
+        // ✅ Return message to sender (ack)
+        return message;
     }
 
     @SubscribeMessage('join_room')
-    handleJoinRoom(@MessageBody() data: { chatId: string }, @ConnectedSocket() client: Socket) {
+    handleJoinRoom(
+        @ConnectedSocket() client: AuthenticatedSocket,
+        @MessageBody() data: { chatId: string, type: string }
+    ) {
+        console.log(`🟢 User ${client.user?.customer_id} joining room ${data.chatId}`);
         client.join(data.chatId);
-        client.emit('joined_room', {chatId: data.chatId});
     }
 
     @SubscribeMessage('leave_room')
@@ -166,9 +205,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
 
     @SubscribeMessage('get_messages')
-    async handleGetMessages(@MessageBody() data: { chatId: string }, @ConnectedSocket() client: Socket) {
+    async handleGetMessages(
+        @ConnectedSocket() client: AuthenticatedSocket,
+        @MessageBody() data: { chatId: string }
+    ) {
         const messages = await this.chatService.getMessages(data.chatId);
-        client.emit('get_messages', messages);
+
+        client.emit('messages_response', messages);
     }
 
 }

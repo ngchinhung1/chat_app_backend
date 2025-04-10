@@ -26,14 +26,38 @@ const common_1 = require("@nestjs/common");
 const contact_service_1 = require("./contact.service");
 const create_contact_dto_1 = require("./dto/create-contact.dto");
 const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let ContactController = class ContactController {
-    constructor(contactService) {
+    constructor(contactService, i18n) {
         this.contactService = contactService;
+        this.i18n = i18n;
     }
     addContact(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
             const ownerId = req.user.customer_id;
-            const result = yield this.contactService.addContact(ownerId, dto);
+            const language = req.headers['language'] || 'en';
+            try {
+                const result = yield this.contactService.addContact(ownerId, dto, req.language);
+                return {
+                    status: true,
+                    code: 200,
+                    data: result,
+                    msg: 'SUCCESS',
+                };
+            }
+            catch (error) {
+                return {
+                    status: false,
+                    code: 400,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                    data: null,
+                };
+            }
+        });
+    }
+    matchContacts(body) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = yield this.contactService.matchContacts(body.contacts);
             return {
                 status: true,
                 code: 200,
@@ -53,7 +77,16 @@ __decorate([
     __metadata("design:paramtypes", [create_contact_dto_1.CreateContactDto, Object]),
     __metadata("design:returntype", Promise)
 ], ContactController.prototype, "addContact", null);
+__decorate([
+    (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('/match'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ContactController.prototype, "matchContacts", null);
 exports.ContactController = ContactController = __decorate([
     (0, common_1.Controller)('contact'),
-    __metadata("design:paramtypes", [contact_service_1.ContactService])
+    __metadata("design:paramtypes", [contact_service_1.ContactService,
+        _i18n_service_1.I18nService])
 ], ContactController);

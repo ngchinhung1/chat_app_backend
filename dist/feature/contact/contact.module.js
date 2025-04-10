@@ -18,6 +18,7 @@ const chat_service_1 = require("../chat/chat.service");
 const chat_participant_entity_1 = require("../chat/entities/chat_participant.entity");
 const message_entity_1 = require("../chat/entities/message.entity");
 const chat_list_entity_1 = require("../chat/entities/chat_list.entity");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let ContactModule = class ContactModule {
 };
 exports.ContactModule = ContactModule;
@@ -27,7 +28,7 @@ exports.ContactModule = ContactModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([contact_entity_1.Contact, user_entity_1.UserEntity, chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity, chat_list_entity_1.ChatListEntity]),
             chat_module_1.ChatModule,
         ],
-        providers: [contact_service_1.ContactService, chat_service_1.ChatService,],
+        providers: [contact_service_1.ContactService, chat_service_1.ChatService, _i18n_service_1.I18nService],
         controllers: [contact_controller_1.ContactController],
     })
 ], ContactModule);

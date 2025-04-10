@@ -15,7 +15,11 @@ function socketAuthMiddleware(socket, next) {
         return next(new Error('Authentication error: No token'));
     }
     try {
-        socket.user = jsonwebtoken_1.default.verify(token, SECRET_KEY);
+        const decoded = jsonwebtoken_1.default.verify(token, SECRET_KEY);
+        if (!decoded.customer_id) {
+            return next(new Error('Authentication error: Invalid token payload'));
+        }
+        socket.user = decoded;
         next();
     }
     catch (err) {

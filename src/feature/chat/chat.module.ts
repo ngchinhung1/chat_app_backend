@@ -1,6 +1,6 @@
 import {JwtModule} from '@nestjs/jwt';
 import {ConfigModule} from '@nestjs/config';
-import {Module} from "@nestjs/common";
+import {MiddlewareConsumer, Module, NestModule} from "@nestjs/common";
 import {ChatGateway} from "./chat.gateway";
 import {FcmModule} from "../../fcm/fcm.module";
 import {ChatService} from "./chat.service";
@@ -9,6 +9,7 @@ import {ChatParticipantEntity} from "./entities/chat_participant.entity";
 import {MessageEntity} from "./entities/message.entity";
 import {ChatListEntity} from "./entities/chat_list.entity";
 import {UserEntity} from "../auth/entities/user.entity";
+import {socketAuthMiddleware} from "../../middleware/socketAuthMiddleware";
 
 @Module({
     imports: [
@@ -20,5 +21,10 @@ import {UserEntity} from "../auth/entities/user.entity";
     providers: [ChatGateway, ChatService],
     exports: [ChatGateway],
 })
-export class ChatModule {
+export class ChatModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(socketAuthMiddleware)
+            .forRoutes(ChatGateway);
+    }
 }

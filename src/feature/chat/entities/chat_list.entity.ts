@@ -7,10 +7,10 @@ export class ChatListEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column({ nullable: true })
+    @Column({nullable: true})
     user1_id?: string;
 
-    @Column({ nullable: true })
+    @Column({nullable: true})
     user2_id?: string;
 
     @Column({type: 'enum', enum: ['private', 'group'], default: 'private'})
@@ -22,21 +22,23 @@ export class ChatListEntity {
     @Column({nullable: true})
     avatar_url?: string;
 
-    @Column({ nullable: true })
+    @Column({nullable: true})
     created_by?: string;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    created_at!: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    created_at?: Date;
 
-    @UpdateDateColumn({ type: 'timestamp' })
-    updated_at!: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    updated_at?: Date;
 
-    @Index()
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    lastMessageAt!: Date;
+    @Column({ type: 'timestamp', nullable: true })
+    lastMessageAt?: Date;
 
     @Column({nullable: true})
     last_message_id?: string;
+
+    @Column({ nullable: true })
+    last_message?: string;
 
     @Column({default: true})
     is_active?: boolean;
@@ -44,10 +46,10 @@ export class ChatListEntity {
     @Column({type: 'json', nullable: true})
     extra_metadata?: Record<string, any>;
 
-    @OneToMany(() => MessageEntity, (message) => message.chat)
-    messages?: MessageEntity[];
+    @OneToMany(() => ChatParticipantEntity, (participant) => participant.chat, { cascade: true, eager: true })
+    participants!: ChatParticipantEntity[];
 
-    @OneToMany(() => ChatParticipantEntity, (cp) => cp.chat)
-    participants?: ChatParticipantEntity[];
+    @OneToMany(() => MessageEntity, (message) => message.chat, { cascade: true })
+    messages!: MessageEntity[];
 
 }

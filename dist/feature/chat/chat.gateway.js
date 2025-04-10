@@ -20,13 +20,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var ChatGateway_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const chat_service_1 = require("./chat.service");
+const send_message_dto_1 = require("./dto/send-message.dto");
 const fcm_service_1 = require("../../fcm/fcm.service");
-let ChatGateway = class ChatGateway {
+const common_1 = require("@nestjs/common");
+const socketAuthMiddleware_1 = require("../../middleware/socketAuthMiddleware");
+const jwtWsAuth_guard_1 = require("../../config/guards/jwtWsAuth.guard");
+let ChatGateway = ChatGateway_1 = class ChatGateway {
+    configure(consumer) {
+        consumer
+            .apply(socketAuthMiddleware_1.socketAuthMiddleware)
+            .forRoutes(ChatGateway_1);
+    }
     constructor(chatService, fcmService) {
         this.chatService = chatService;
         this.fcmService = fcmService;
@@ -44,6 +54,8 @@ let ChatGateway = class ChatGateway {
     }
     // 🔌 Track connections
     handleConnection(client) {
+        var _a;
+        console.log('✅ Client connected:', client.id, (_a = client.user) === null || _a === void 0 ? void 0 : _a.customer_id);
         const user = client.data.user;
         if (user === null || user === void 0 ? void 0 : user.customer_id) {
             this.connectedClients.set(user.customer_id, client);
@@ -60,22 +72,46 @@ let ChatGateway = class ChatGateway {
     getSocketByUserId(userId) {
         return this.connectedClients.get(userId);
     }
-    handleChatList(data, client) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const chatList = yield this.chatService.getChatListForUser(data.customer_id);
-            client.emit('chat_list', chatList);
-        });
+    handleChatListing(client, data) {
+        console.log('📨 received chat_listing:', data);
+        const chatList = [
+            {
+                chatId: '1',
+                title: 'Support Chat',
+                last_message: 'Hello there',
+                last_message_at: new Date().toISOString(),
+            },
+            {
+                chatId: '2',
+                title: 'General Group',
+                last_message: 'How are you?',
+                last_message_at: new Date().toISOString(),
+            },
+        ];
+        console.log('📤 sending chat_list:', chatList);
+        client.emit('chat_list', chatList);
     }
-    handleSendMessage(data) {
+    handleSendMessage(client, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const message = yield this.chatService.saveMessage(data);
+            var _a;
+            const senderCustomerId = (_a = client.user.customer_id) !== null && _a !== void 0 ? _a : null;
+            // ✅ Use your existing service method
+            const message = yield this.chatService.sendMessage(senderCustomerId, data);
+            // 🔥 Emit to the room so the receiver gets the new message
             this.server.to(data.chat_id).emit('new_message', message);
-            return message; // Acknowledgement back to sender
+            // ✅ Use your own method to get the chat list item to refresh receiver UI
+            const receiverId = yield this.chatService.getOtherParticipant(data.chat_id, senderCustomerId);
+            const updatedChatListItem = yield this.chatService.getChatListItem(receiverId, data.chat_id);
+            // 🎯 Emit real-time update to receiver’s chat list
+            this.server.to(`user_${receiverId}`).emit('chat_list_update', updatedChatListItem);
+            // ✅ Return message to sender (ack)
+            return message;
         });
     }
-    handleJoinRoom(data, client) {
+    handleJoinRoom(client, data) {
+        var _a;
+        console.log(`🟢 User ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.customer_id} joining room ${data.chatId}`);
         client.join(data.chatId);
-        client.emit('joined_room', { chatId: data.chatId });
     }
     handleLeaveRoom(chatId, client) {
         client.leave(chatId);
@@ -134,10 +170,10 @@ let ChatGateway = class ChatGateway {
             });
         });
     }
-    handleGetMessages(data, client) {
+    handleGetMessages(client, data) {
         return __awaiter(this, void 0, void 0, function* () {
             const messages = yield this.chatService.getMessages(data.chatId);
-            client.emit('get_messages', messages);
+            client.emit('messages_response', messages);
         });
     }
 };
@@ -148,25 +184,26 @@ __decorate([
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
     (0, websockets_1.SubscribeMessage)('chat_listing'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
-    __metadata("design:returntype", Promise)
-], ChatGateway.prototype, "handleChatList", null);
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", void 0)
+], ChatGateway.prototype, "handleChatListing", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('send_message'),
-    __param(0, (0, websockets_1.MessageBody)()),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, send_message_dto_1.SendMessageDto]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleSendMessage", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('join_room'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], ChatGateway.prototype, "handleJoinRoom", null);
 __decorate([
@@ -211,13 +248,14 @@ __decorate([
 ], ChatGateway.prototype, "handleSearchMessages", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('get_messages'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleGetMessages", null);
-exports.ChatGateway = ChatGateway = __decorate([
+exports.ChatGateway = ChatGateway = ChatGateway_1 = __decorate([
+    (0, common_1.UseGuards)(jwtWsAuth_guard_1.JwtWsAuthGuard),
     (0, websockets_1.WebSocketGateway)({ cors: true }),
     __metadata("design:paramtypes", [chat_service_1.ChatService,
         fcm_service_1.FcmService])

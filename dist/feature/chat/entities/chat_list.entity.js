@@ -45,22 +45,25 @@ __decorate([
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "created_by", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamp' }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Date)
 ], ChatListEntity.prototype, "created_at", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamp' }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Date)
 ], ChatListEntity.prototype, "updated_at", void 0);
 __decorate([
-    (0, typeorm_1.Index)(),
-    (0, typeorm_1.Column)({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' }),
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
     __metadata("design:type", Date)
 ], ChatListEntity.prototype, "lastMessageAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], ChatListEntity.prototype, "last_message_id", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], ChatListEntity.prototype, "last_message", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
@@ -70,13 +73,13 @@ __decorate([
     __metadata("design:type", Object)
 ], ChatListEntity.prototype, "extra_metadata", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.chat),
-    __metadata("design:type", Array)
-], ChatListEntity.prototype, "messages", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipantEntity, (cp) => cp.chat),
+    (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipantEntity, (participant) => participant.chat, { cascade: true, eager: true }),
     __metadata("design:type", Array)
 ], ChatListEntity.prototype, "participants", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.chat, { cascade: true }),
+    __metadata("design:type", Array)
+], ChatListEntity.prototype, "messages", void 0);
 exports.ChatListEntity = ChatListEntity = __decorate([
     (0, typeorm_1.Entity)('chat_list')
 ], ChatListEntity);

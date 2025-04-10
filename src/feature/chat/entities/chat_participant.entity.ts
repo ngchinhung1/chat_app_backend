@@ -7,11 +7,11 @@ export class ChatParticipantEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column()
-    chat_id?: string;
-
-    @Column({name: 'user_id'})
+    @Column({ type: 'uuid' })
     user_id!: string;
+
+    @Column({ type: 'uuid' })
+    chat_id!: string;
 
     @Column({name: 'customer_id', nullable: false})
     customer_id!: string;
@@ -34,8 +34,8 @@ export class ChatParticipantEntity {
     @CreateDateColumn({type: 'timestamp'})
     joined_at!: Date;
 
-    @ManyToOne(() => ChatListEntity, chat => chat.participants, {nullable: false})
-    @JoinColumn({name: 'chat_id'})
+    @ManyToOne(() => ChatListEntity, (chat) => chat.participants)
+    @JoinColumn({ name: 'chat_id' })
     chat!: ChatListEntity;
 
     @ManyToOne(() => UserEntity, {eager: false, nullable: false})

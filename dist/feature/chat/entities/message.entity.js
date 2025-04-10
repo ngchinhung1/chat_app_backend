@@ -21,15 +21,15 @@ __decorate([
     __metadata("design:type", String)
 ], MessageEntity.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'chat_id' }),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], MessageEntity.prototype, "send_by", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid' }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "chat_id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], MessageEntity.prototype, "sender_id", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, { nullable: false }),
+    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.messages),
     (0, typeorm_1.JoinColumn)({ name: 'chat_id' }),
     __metadata("design:type", chat_list_entity_1.ChatListEntity)
 ], MessageEntity.prototype, "chat", void 0);

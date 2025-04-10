@@ -3,6 +3,8 @@ import {AppModule} from './app.module';
 import {ValidationPipe, BadRequestException} from '@nestjs/common';
 import {I18nService} from "./i18n/ i18n.service";
 import {ApiLoggerInterceptor} from "./log/log.interceptor";
+import {IoAdapter} from "@nestjs/platform-socket.io";
+import {socketAuthMiddleware} from "./middleware/socketAuthMiddleware";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -35,6 +37,15 @@ async function bootstrap() {
             whitelist: true,
             transform: true,
         }),
+    );
+    app.useWebSocketAdapter(
+        new (class extends IoAdapter {
+            createIOServer(port: number, options?: any) {
+                const server = super.createIOServer(port, options);
+                server.of('/chat').use(socketAuthMiddleware);
+                return server;
+            }
+        })(app),
     );
     app.useGlobalInterceptors(app.get(ApiLoggerInterceptor));
 

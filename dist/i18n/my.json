@@ -15,5 +15,6 @@
     "USER_NOT_FOUND": "Pengguna tidak dijumpai",
     "USER_PROFILE_UPDATED_SUCCESSFULLY": "Profil berjaya dikemaskini",
     "USER_PROFILE_CREATED_SUCCESSFULLY": "Profil berjaya dicipta",
-    "IMAGE_UPLOADED_SUCCESSFULLY": "Gambar berjaya dimuat naik"
+    "IMAGE_UPLOADED_SUCCESSFULLY": "Gambar berjaya dimuat naik",
+    "USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP": "Pengguna ini tidak menggunakan Aplikasi Chat kami. Sila minta mereka memuat turun Aplikasi untuk menggunakan ciri ini."
 }

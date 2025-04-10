@@ -18,7 +18,13 @@ const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const chat_list_entity_1 = require("./entities/chat_list.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
+const socketAuthMiddleware_1 = require("../../middleware/socketAuthMiddleware");
 let ChatModule = class ChatModule {
+    configure(consumer) {
+        consumer
+            .apply(socketAuthMiddleware_1.socketAuthMiddleware)
+            .forRoutes(chat_gateway_1.ChatGateway);
+    }
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
