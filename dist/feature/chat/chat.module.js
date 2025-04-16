@@ -14,23 +14,26 @@ const chat_gateway_1 = require("./chat.gateway");
 const fcm_module_1 = require("../../fcm/fcm.module");
 const chat_service_1 = require("./chat.service");
 const typeorm_1 = require("@nestjs/typeorm");
-const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const chat_list_entity_1 = require("./entities/chat_list.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
-const socketAuthMiddleware_1 = require("../../middleware/socketAuthMiddleware");
+const conversation_entity_1 = require("./entities/conversation.entity");
+const conversation_participants_entity_1 = require("./entities/conversation_participants.entity");
+const contact_entity_1 = require("../contact/entities/contact.entity");
 let ChatModule = class ChatModule {
-    configure(consumer) {
-        consumer
-            .apply(socketAuthMiddleware_1.socketAuthMiddleware)
-            .forRoutes(chat_gateway_1.ChatGateway);
-    }
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([chat_participant_entity_1.ChatParticipantEntity, message_entity_1.MessageEntity, chat_list_entity_1.ChatListEntity, user_entity_1.UserEntity]),
+            typeorm_1.TypeOrmModule.forFeature([
+                message_entity_1.MessageEntity,
+                chat_list_entity_1.ChatListEntity,
+                user_entity_1.UserEntity,
+                contact_entity_1.Contact,
+                conversation_entity_1.ConversationEntity,
+                conversation_participants_entity_1.ConversationParticipantsEntity
+            ]),
             jwt_1.JwtModule.register({}),
             config_1.ConfigModule,
             fcm_module_1.FcmModule,

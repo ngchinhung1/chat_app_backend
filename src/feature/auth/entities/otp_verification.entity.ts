@@ -4,7 +4,7 @@ import {
     Column,
     CreateDateColumn,
 } from 'typeorm';
-import {IsEnum, IsOptional} from "class-validator";
+import {IsOptional} from "class-validator";
 
 @Entity('otp_verifications')
 export class OtpVerification {

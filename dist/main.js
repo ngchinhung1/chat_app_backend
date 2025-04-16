@@ -14,11 +14,11 @@ const app_module_1 = require("./app.module");
 const common_1 = require("@nestjs/common");
 const _i18n_service_1 = require("./i18n/ i18n.service");
 const log_interceptor_1 = require("./log/log.interceptor");
-const platform_socket_io_1 = require("@nestjs/platform-socket.io");
-const socketAuthMiddleware_1 = require("./middleware/socketAuthMiddleware");
+const custom_io_adapter_1 = require("./types/custom-io.adapter");
 function bootstrap() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = yield core_1.NestFactory.create(app_module_1.AppModule);
+        app.useWebSocketAdapter(new custom_io_adapter_1.CustomIoAdapter(app));
         const i18nService = app.get(_i18n_service_1.I18nService);
         app.useGlobalPipes(new common_1.ValidationPipe({
             exceptionFactory: (errors) => {
@@ -46,16 +46,9 @@ function bootstrap() {
             whitelist: true,
             transform: true,
         }));
-        app.useWebSocketAdapter(new (class extends platform_socket_io_1.IoAdapter {
-            createIOServer(port, options) {
-                const server = super.createIOServer(port, options);
-                server.of('/chat').use(socketAuthMiddleware_1.socketAuthMiddleware);
-                return server;
-            }
-        })(app));
         app.useGlobalInterceptors(app.get(log_interceptor_1.ApiLoggerInterceptor));
         yield app.listen(3000, '0.0.0.0');
         console.log('✅ Server running on http://localhost:3000');
     });
 }
-bootstrap();
+bootstrap().then(() => null);

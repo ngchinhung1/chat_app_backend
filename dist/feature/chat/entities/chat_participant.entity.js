@@ -57,7 +57,7 @@ __decorate([
     __metadata("design:type", Date)
 ], ChatParticipantEntity.prototype, "joined_at", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.participants),
+    (0, typeorm_1.ManyToOne)(() => chat_list_entity_1.ChatListEntity, (chat) => chat.participants, { onDelete: 'CASCADE' }),
     (0, typeorm_1.JoinColumn)({ name: 'chat_id' }),
     __metadata("design:type", chat_list_entity_1.ChatListEntity)
 ], ChatParticipantEntity.prototype, "chat", void 0);

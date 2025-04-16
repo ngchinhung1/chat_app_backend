@@ -3,56 +3,53 @@ import {
     PrimaryGeneratedColumn,
     Column,
     CreateDateColumn,
-    ManyToOne,
-    JoinColumn,
+    UpdateDateColumn,
 } from 'typeorm';
-import {ChatListEntity} from './chat_list.entity';
-import {UserEntity} from "../../auth/entities/user.entity";
+
+export enum MessageStatus {
+    SENDING = 'sending',
+    SENT = 'sent',
+    DELIVERED = 'delivered',
+    READ = 'read',
+    FAILED = 'failed',
+}
 
 @Entity('message')
 export class MessageEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column()
-    send_by!: string;
+    @Column({nullable: false})
+    conversationId!: string;
 
-    @Column({type: 'uuid'})
-    chat_id!: string;
+    @Column({nullable: false})
+    sendBy!: string;
 
-    @ManyToOne(() => ChatListEntity, (chat) => chat.messages)
-    @JoinColumn({name: 'chat_id'})
-    chat!: ChatListEntity;
-
-    // Foreign key for sender (customer_id)
-    @Column()
-    senderCustomerId?: string;
-
-    // Relation to User entity
-    @ManyToOne(() => UserEntity, (user) => user.messages, {
-        onDelete: 'CASCADE',
-    })
-    @JoinColumn({name: 'sender_customer_id', referencedColumnName: 'customer_id'})
-    sender?: UserEntity;
-
-    // Message text content
     @Column({type: 'text'})
     content?: string;
 
-    // Timestamp of message creation
-    @CreateDateColumn({type: 'timestamp'})
+    @Column({nullable: false})
+    senderCustomerId!: string;
+
+    @Column({nullable: false})
+    receiverCustomerId!: string;
+
+    // Message status to track if it's sending, sent, delivered, read, etc.
+    @Column({
+        type: 'enum',
+        enum: MessageStatus,
+        default: MessageStatus.SENDING,
+    })
+    status!: MessageStatus;
+
+    // Optional field for file type if message contains media. Default is 'text'.
+    @Column({nullable: true, default: 'text'})
+    fileType?: string;
+
+    @CreateDateColumn()
     createdAt!: Date;
 
-    @Column({nullable: true})
-    file_type?: string;
-
-    @Column({nullable: true})
-    attachment_url?: string;
-
-    @Column({nullable: true})
-    voice_url?: string;
-
-    @Column({type: 'timestamp', nullable: true})
-    read_at?: Date | null;
+    @UpdateDateColumn()
+    updatedAt!: Date;
 
 }

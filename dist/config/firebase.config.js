@@ -35,10 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initializeFirebase = initializeFirebase;
 const admin = __importStar(require("firebase-admin"));
-const path_1 = require("path");
 function initializeFirebase() {
     if (!admin.apps.length) {
-        const serviceAccount = require((0, path_1.join)(__dirname, 'firebase-adminsdk.json'));
+        const serviceAccount = require('../../src/config/firebase-adminsdk.json');
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
         });

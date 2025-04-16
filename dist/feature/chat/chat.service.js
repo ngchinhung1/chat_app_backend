@@ -25,241 +25,218 @@ exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
-const chat_participant_entity_1 = require("./entities/chat_participant.entity");
 const message_entity_1 = require("./entities/message.entity");
 const chat_list_entity_1 = require("./entities/chat_list.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
+const conversation_entity_1 = require("./entities/conversation.entity");
+const conversation_participants_entity_1 = require("./entities/conversation_participants.entity");
 let ChatService = class ChatService {
-    constructor(chatParticipantRepo, messageRepo, chatListRepo, userRepo) {
-        this.chatParticipantRepo = chatParticipantRepo;
+    constructor(messageRepo, chatListRepo, userRepo, conversationRepository, conversationParticipantRepository) {
         this.messageRepo = messageRepo;
         this.chatListRepo = chatListRepo;
         this.userRepo = userRepo;
+        this.conversationRepository = conversationRepository;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
-    getChatListForUser(customerId) {
+    findSenderId(senderCustomerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('[getChatListForUser] fetching chat list for:', customerId);
-            const participants = yield this.chatParticipantRepo.find({
-                where: { customer_id: customerId, is_deleted: false },
-                relations: ['chat'],
-                order: { joined_at: 'DESC' },
+            return yield this.userRepo.findOne({
+                where: {
+                    customer_id: senderCustomerId,
+                },
             });
-            console.log('[getChatListForUser] found participants:', participants.length);
-            // If this returns [], no chat will be shown
-            if (!participants.length)
-                return [];
-            const chatList = yield Promise.all(participants.map((p) => __awaiter(this, void 0, void 0, function* () {
-                const chat = p.chat;
-                if (!chat)
-                    return null;
-                // Get last message
-                const lastMessage = yield this.messageRepo.findOne({
-                    where: {
-                        chat: { id: chat.id },
-                    },
-                    order: {
-                        createdAt: 'DESC',
-                    },
-                });
-                // Count unread messages
-                const unreadCount = yield this.messageRepo.count({
-                    where: {
-                        chat: { id: chat.id },
-                        createdAt: (0, typeorm_2.MoreThan)(p.last_read_at || new Date(0)),
-                        sender: { customer_id: (0, typeorm_2.Not)(customerId) },
-                    },
-                });
-                return {
-                    chat_id: chat.id,
-                    chat_type: chat.chat_type,
-                    title: chat.title,
-                    avatar_url: chat.avatar_url,
-                    last_message_id: chat.last_message_id,
-                    last_message: (lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.content) || null,
-                    last_message_at: (lastMessage === null || lastMessage === void 0 ? void 0 : lastMessage.createdAt) || null,
-                    unread_count: unreadCount,
-                    joined_at: p.joined_at,
-                    role: p.role,
-                };
-            })));
-            return chatList.filter(Boolean);
         });
     }
-    sendMessage(sendBy, sendMessageDto) {
+    findUserByPhone(toCountryCode, toPhoneNumber) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { chat_id, content } = sendMessageDto;
-            // Check if chat already exists between these participants
-            let chat = yield this.chatListRepo.createQueryBuilder('chat')
-                .leftJoin('chat.participants', 'participant')
-                .where('participant.userId IN (:...userIds)', { userIds: [sendBy, chat_id] })
-                .groupBy('chat.id')
-                .having('COUNT(DISTINCT participant.userId) = 2') // ensures exactly two participants
-                .getOne();
-            if (!chat) {
-                chat = this.chatListRepo.create({
-                    participants: [
-                        this.chatParticipantRepo.create({ user_id: sendBy.toString() }),
-                        this.chatParticipantRepo.create({ user_id: chat_id.toString() }),
-                    ],
-                    last_message: content,
-                    lastMessageAt: new Date(),
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                });
-                yield this.chatListRepo.save(chat);
+            return yield this.userRepo.findOne({
+                where: {
+                    country_code: toCountryCode,
+                    phone_number: toPhoneNumber,
+                },
+            });
+        });
+    }
+    createConversation(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const existingConversation = yield this.conversationRepository.findOne({
+                where: [
+                    {
+                        senderUserId: data.senderUserId,
+                        receiverUserId: data.receiverUserId,
+                    },
+                    {
+                        senderUserId: data.receiverUserId,
+                        receiverUserId: data.senderUserId,
+                    },
+                ],
+            });
+            if (existingConversation) {
+                return existingConversation;
+            }
+            // Create the conversation entity with the provided sender/receiver info.
+            const conversation = this.conversationRepository.create({
+                senderCustomerId: data.senderCustomerId,
+                senderUserId: data.senderUserId,
+                receiverCustomerId: data.receiverCustomerId,
+                receiverUserId: data.receiverUserId,
+            });
+            const savedConversation = yield this.conversationRepository.save(conversation);
+            // Create conversation participant for the sender.
+            const senderParticipant = this.conversationParticipantRepository.create({
+                conversation: savedConversation,
+                userId: data.senderUserId,
+                customerID: data.senderCustomerId,
+            });
+            // Create conversation participant for the receiver.
+            const receiverParticipant = this.conversationParticipantRepository.create({
+                conversation: savedConversation,
+                userId: data.receiverUserId,
+                customerID: data.receiverCustomerId,
+            });
+            // Save both conversation participants in one go.
+            yield this.conversationParticipantRepository.save([senderParticipant, receiverParticipant]);
+            return savedConversation;
+        });
+    }
+    sendMessage(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { conversationId, content, file_type, senderCustomerId } = data;
+            // Fetch the conversation to ensure it exists.
+            const conversation = yield this.conversationRepository.findOne({ where: { conversationId: conversationId } });
+            if (!conversation) {
+                throw new common_1.NotFoundException('Conversation not found');
+            }
+            // Determine the receiver’s customerId.
+            let receiverCustomerId;
+            if (senderCustomerId === conversation.senderCustomerId) {
+                receiverCustomerId = conversation.receiverCustomerId;
             }
             else {
-                chat.last_message = content;
-                chat.lastMessageAt = new Date();
-                chat.updated_at = new Date();
-                yield this.chatListRepo.save(chat);
+                receiverCustomerId = conversation.senderCustomerId;
             }
-            // Save the message with the chat id
+            // Create a new message entity.
             const message = this.messageRepo.create({
-                chat_id: chat.id.toString(),
-                send_by: sendBy.toString(),
-                content: content,
-                createdAt: new Date(),
+                conversationId,
+                sendBy: senderCustomerId,
+                content,
+                senderCustomerId,
+                receiverCustomerId,
+                status: message_entity_1.MessageStatus.SENT,
+                fileType: file_type || 'text',
             });
-            yield this.messageRepo.save(message);
-            return Object.assign(Object.assign({}, message), { status: 'sent', read_at: new Date() });
+            // Save and return the message.
+            const savedMessage = yield this.messageRepo.save(message);
+            return savedMessage;
         });
     }
-    getOtherParticipant(chatId, sendBy) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const chat = yield this.chatListRepo.findOne({
-                where: { id: chatId },
-                relations: ['participants'],
-            });
-            if (!chat)
-                throw new Error('Chat not found');
-            const receiver = chat.participants.find(p => p.user_id !== sendBy);
-            if (!receiver)
-                throw new Error('Receiver not found');
-            return receiver.user_id;
+    getMessages(conversationId_1, cursor_1) {
+        return __awaiter(this, arguments, void 0, function* (conversationId, cursor, limit = 20) {
+            const query = this.messageRepo.createQueryBuilder('message')
+                .where('message.conversationId = :conversationId', { conversationId });
+            if (cursor) {
+                // We assume that cursor is a timestamp string.
+                query.andWhere('message.createdAt < :cursor', { cursor });
+            }
+            query.orderBy('message.createdAt', 'DESC') // fetch latest messages first
+                .limit(limit);
+            const messages = yield query.getMany();
+            // Reverse the result so that messages are in chronological order (oldest first)
+            return messages.reverse();
         });
     }
-    getChatListItem(userId, chatId) {
+    updateChatListForUser(data) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d;
-            const chat = yield this.chatListRepo.findOne({
-                where: { id: chatId },
-                relations: ['participants'],
+            let chatList = yield this.chatListRepo.findOne({
+                where: { conversationId: data.conversationId, customerId: data.customerId },
             });
-            if (!chat)
-                throw new Error('Chat not found');
-            return {
-                chatId: chat.id,
-                name: (_a = chat.title) !== null && _a !== void 0 ? _a : '',
-                lastMessage: (_b = chat.last_message) !== null && _b !== void 0 ? _b : '',
-                updatedAt: (_d = (_c = chat.lastMessageAt) === null || _c === void 0 ? void 0 : _c.toISOString()) !== null && _d !== void 0 ? _d : '',
-            };
-        });
-    }
-    markMessageAsRead(messageId, readAt) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.messageRepo.update({ id: messageId }, { read_at: readAt });
-        });
-    }
-    updateLastReadAt(chatId, userId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.chatParticipantRepo.update({ chat_id: chatId, user_id: userId }, { last_read_at: new Date() });
-        });
-    }
-    getRecipientDeviceToken(chatId, sendBy) {
-        return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const participant = yield this.chatParticipantRepo.findOne({
-                where: {
-                    chat_id: chatId,
-                    user_id: (0, typeorm_2.Not)(sendBy),
-                },
-                relations: ['user'],
-            });
-            return ((_a = participant === null || participant === void 0 ? void 0 : participant.user) === null || _a === void 0 ? void 0 : _a.notificationToken) || null;
-        });
-    }
-    openPrivateChatRoom(userA, userB) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.findOrCreatePrivateChat(userA.customer_id, userB.customer_id);
-        });
-    }
-    findOrCreatePrivateChat(userACustomerId, userBCustomerId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const [userA, userB] = [userACustomerId, userBCustomerId].sort();
-            const existingChat = yield this.chatListRepo
-                .createQueryBuilder('chat')
-                .innerJoin('chat.participants', 'participantA', 'participantA.customer_id = :userA', { userA })
-                .innerJoin('chat.participants', 'participantB', 'participantB.customer_id = :userB', { userB })
-                .where('chat.chat_type = :type', { type: 'private' })
-                .getOne();
-            if (existingChat)
-                return existingChat;
-            const savedChat = yield this.chatListRepo.save(this.chatListRepo.create({
-                chat_type: 'private',
-                user1_id: userA,
-                user2_id: userB,
-                created_by: userA,
-            }));
-            // 🧠 Must load full users to assign `user: UserEntity`
-            const userAEntity = yield this.userRepo.findOne({ where: { customer_id: userA } });
-            const userBEntity = yield this.userRepo.findOne({ where: { customer_id: userB } });
-            if (!userAEntity || !userBEntity) {
-                throw new Error('One or both users not found');
+            if (!chatList) {
+                chatList = this.chatListRepo.create({
+                    conversationId: data.conversationId,
+                    customerId: data.customerId,
+                    chat_type: data.chatType,
+                    receiverFirstName: (_a = data.contact) === null || _a === void 0 ? void 0 : _a.firstName,
+                    receiverLastName: (_b = data.contact) === null || _b === void 0 ? void 0 : _b.lastName,
+                    receiverCountryCode: (_c = data.contact) === null || _c === void 0 ? void 0 : _c.countryCode,
+                    receiverPhoneNumber: (_d = data.contact) === null || _d === void 0 ? void 0 : _d.phoneNumber,
+                    lastMessage: data.lastMessage,
+                    groupName: data.groupName,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    unreadCount: data.isNewMessage ? 1 : 0,
+                });
             }
-            const participants = this.chatParticipantRepo.create([
-                {
-                    chat: savedChat,
-                    user: userAEntity, // ✅ now TypeORM can set `user_id`
-                    customer_id: userAEntity.customer_id,
-                },
-                {
-                    chat: savedChat,
-                    user: userBEntity,
-                    customer_id: userBEntity.customer_id,
-                },
-            ]);
-            yield this.chatParticipantRepo.save(participants);
-            return savedChat;
+            else {
+                chatList.lastMessage = data.lastMessage;
+                chatList.updatedAt = new Date();
+                // If this update is due to a new unread message from the other party, increment unreadCount.
+                // Otherwise (i.e. for the sender), you might want to reset unreadCount to 0.
+                if (data.isNewMessage) {
+                    chatList.unreadCount = chatList.unreadCount + 1;
+                }
+                else {
+                    chatList.unreadCount = 0;
+                }
+            }
+            return yield this.chatListRepo.save(chatList);
         });
     }
-    getRecipientId(chatId, sendBy) {
+    getChatLists(customerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const participants = yield this.chatParticipantRepo.find({
-                where: { chat_id: chatId },
+            const chatLists = yield this.chatListRepo.find({
+                where: { customerId },
+                order: { updatedAt: 'DESC' },
             });
-            const recipient = participants.find(p => p.user_id !== sendBy);
-            return (recipient === null || recipient === void 0 ? void 0 : recipient.user_id) || null;
+            return chatLists.map((entry) => {
+                const dto = {
+                    id: entry.id,
+                    conversationId: entry.conversationId,
+                    customerId: entry.customerId,
+                    chatType: entry.chat_type,
+                    lastMessage: entry.lastMessage,
+                    updatedAt: entry.updatedAt,
+                    unreadCount: entry.unreadCount,
+                };
+                if (entry.chat_type === 'group') {
+                    // For group chats, use groupName as the title.
+                    dto.title = entry.groupName || '';
+                }
+                else {
+                    // For private chats, send raw contact fields for the frontend to compute the title.
+                    dto.firstName = entry.receiverFirstName;
+                    dto.lastName = entry.receiverLastName;
+                    dto.countryCode = entry.receiverCountryCode;
+                    dto.phoneNumber = entry.receiverPhoneNumber;
+                }
+                return dto;
+            });
         });
     }
-    searchMessages(chatId, keyword) {
+    markChatListAsRead(conversationId, customerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.messageRepo.find({
-                where: {
-                    chat_id: chatId,
-                    content: (0, typeorm_2.ILike)(`%${keyword}%`),
-                },
-                order: { createdAt: 'DESC' },
+            let chatList = yield this.chatListRepo.findOne({
+                where: { conversationId, customerId },
             });
-        });
-    }
-    getMessages(chatId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.messageRepo.find({
-                where: { chat_id: chatId },
-                order: { createdAt: 'ASC' },
-            });
+            if (!chatList) {
+                throw new Error('Chat list entry not found');
+            }
+            chatList.unreadCount = 0;
+            chatList.updatedAt = new Date();
+            return yield this.chatListRepo.save(chatList);
         });
     }
 };
 exports.ChatService = ChatService;
 exports.ChatService = ChatService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipantEntity)),
-    __param(1, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
-    __param(2, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatListEntity)),
-    __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
+    __param(0, (0, typeorm_1.InjectRepository)(message_entity_1.MessageEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatListEntity)),
+    __param(2, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
+    __param(3, (0, typeorm_1.InjectRepository)(conversation_entity_1.ConversationEntity)),
+    __param(4, (0, typeorm_1.InjectRepository)(conversation_participants_entity_1.ConversationParticipantsEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

@@ -2,33 +2,26 @@ import {IsOptional, IsString} from 'class-validator';
 
 export class SendMessageDto {
     @IsString()
-    chat_id!: string;
+    conversationId!: string;
 
     @IsString()
-    sender_id?: string;
+    senderCustomerId!: string;
 
+    @IsString()
+    receiverCustomerId!: string;
+
+    @IsOptional()
     @IsString()
     content?: string;
 
     @IsOptional()
     @IsString()
-    voiceUrl?: string;
-
-    @IsOptional()
-    @IsString()
-    timestamp?: string;
+    send_by?: string;
 
     @IsOptional()
     @IsString()
     status?: string;
 
     @IsString()
-    customer_id!: string;
-
-    @IsOptional()
-    @IsString()
-    read_at?: string;
-
-    @IsString()
-    file_type?: string;
+    file_type!: string;
 }

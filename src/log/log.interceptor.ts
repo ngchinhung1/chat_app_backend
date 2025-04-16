@@ -79,7 +79,7 @@ export class ApiLoggerInterceptor implements NestInterceptor {
                         duration_ms: duration,
                         customer_id: customerId,
                         ip_address: ip,
-                    });
+                    }).then(() => null);
                 });
 
                 return wrappedData;
@@ -99,7 +99,7 @@ export class ApiLoggerInterceptor implements NestInterceptor {
                     duration_ms: duration,
                     customer_id: customerId,
                     ip_address: ip,
-                });
+                }).then(() => null);
 
                 return of({
                     status: false,

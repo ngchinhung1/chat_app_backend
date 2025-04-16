@@ -77,7 +77,7 @@ let ApiLoggerInterceptor = class ApiLoggerInterceptor {
                     duration_ms: duration,
                     customer_id: customerId,
                     ip_address: ip,
-                });
+                }).then(() => null);
             });
             return wrappedData;
         }), (0, rxjs_1.catchError)((error) => {
@@ -94,7 +94,7 @@ let ApiLoggerInterceptor = class ApiLoggerInterceptor {
                 duration_ms: duration,
                 customer_id: customerId,
                 ip_address: ip,
-            });
+            }).then(() => null);
             return (0, rxjs_1.of)({
                 status: false,
                 code: 500,

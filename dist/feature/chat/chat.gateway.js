@@ -20,160 +20,218 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var ChatGateway_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const chat_service_1 = require("./chat.service");
 const send_message_dto_1 = require("./dto/send-message.dto");
-const fcm_service_1 = require("../../fcm/fcm.service");
-const common_1 = require("@nestjs/common");
-const socketAuthMiddleware_1 = require("../../middleware/socketAuthMiddleware");
-const jwtWsAuth_guard_1 = require("../../config/guards/jwtWsAuth.guard");
-let ChatGateway = ChatGateway_1 = class ChatGateway {
-    configure(consumer) {
-        consumer
-            .apply(socketAuthMiddleware_1.socketAuthMiddleware)
-            .forRoutes(ChatGateway_1);
-    }
-    constructor(chatService, fcmService) {
+const get_message_dto_1 = require("./dto/get-message.dto");
+const typeorm_1 = require("@nestjs/typeorm");
+const contact_entity_1 = require("../contact/entities/contact.entity");
+const typeorm_2 = require("typeorm");
+let ChatGateway = class ChatGateway {
+    constructor(chatService, contactRepo) {
         this.chatService = chatService;
-        this.fcmService = fcmService;
+        this.contactRepo = contactRepo;
         this.connectedClients = new Map();
     }
     afterInit(server) {
-        console.log('✅ Chat Gateway initialized');
         server.on('connection', (socket) => {
             console.log(`🔌 New socket connected: ${socket.id}`);
-            socket.onAny((event, data) => {
-                console.log(`📡 [Socket Receive] Event: ${event}`);
-                console.log('[Data]', data);
+            socket.onAny((event, ...args) => {
+                console.log(`📡 [Raw Socket] Received event: ${event}`, args);
             });
         });
     }
-    // 🔌 Track connections
     handleConnection(client) {
         var _a;
-        console.log('✅ Client connected:', client.id, (_a = client.user) === null || _a === void 0 ? void 0 : _a.customer_id);
+        console.log('✅ handleConnection for:', client.id, (_a = client.data.user) === null || _a === void 0 ? void 0 : _a.customer_id);
         const user = client.data.user;
         if (user === null || user === void 0 ? void 0 : user.customer_id) {
             this.connectedClients.set(user.customer_id, client);
         }
     }
-    // 🔌 Track disconnections
     handleDisconnect(client) {
         const user = client.data.user;
         if (user === null || user === void 0 ? void 0 : user.customer_id) {
             this.connectedClients.delete(user.customer_id);
         }
     }
-    // 🧠 Helper to get user's socket by their ID
-    getSocketByUserId(userId) {
-        return this.connectedClients.get(userId);
-    }
-    handleChatListing(client, data) {
-        console.log('📨 received chat_listing:', data);
-        const chatList = [
-            {
-                chatId: '1',
-                title: 'Support Chat',
-                last_message: 'Hello there',
-                last_message_at: new Date().toISOString(),
-            },
-            {
-                chatId: '2',
-                title: 'General Group',
-                last_message: 'How are you?',
-                last_message_at: new Date().toISOString(),
-            },
-        ];
-        console.log('📤 sending chat_list:', chatList);
-        client.emit('chat_list', chatList);
-    }
-    handleSendMessage(client, data) {
+    handleCreateConversation(client, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const senderCustomerId = (_a = client.user.customer_id) !== null && _a !== void 0 ? _a : null;
-            // ✅ Use your existing service method
-            const message = yield this.chatService.sendMessage(senderCustomerId, data);
-            // 🔥 Emit to the room so the receiver gets the new message
-            this.server.to(data.chat_id).emit('new_message', message);
-            // ✅ Use your own method to get the chat list item to refresh receiver UI
-            const receiverId = yield this.chatService.getOtherParticipant(data.chat_id, senderCustomerId);
-            const updatedChatListItem = yield this.chatService.getChatListItem(receiverId, data.chat_id);
-            // 🎯 Emit real-time update to receiver’s chat list
-            this.server.to(`user_${receiverId}`).emit('chat_list_update', updatedChatListItem);
-            // ✅ Return message to sender (ack)
-            return message;
+            var _a, _b;
+            try {
+                const senderCustomerId = (_b = (_a = client.data.user) === null || _a === void 0 ? void 0 : _a.customer_id) !== null && _b !== void 0 ? _b : null;
+                const { toCountryCode, toPhoneNumber, conversationType } = data;
+                const senderId = yield this.chatService.findSenderId(senderCustomerId);
+                if (!senderId) {
+                    return {
+                        status: false,
+                        code: 400,
+                        msg: 'Recipient not found.',
+                    };
+                }
+                const recipient = yield this.chatService.findUserByPhone(toCountryCode, toPhoneNumber);
+                if (!recipient) {
+                    return {
+                        status: false,
+                        code: 400,
+                        msg: 'Recipient not found.',
+                    };
+                }
+                // Create a new conversation.
+                const conversation = yield this.chatService.createConversation({
+                    senderCustomerId,
+                    senderUserId: senderId.id,
+                    receiverCustomerId: recipient.customer_id,
+                    receiverUserId: recipient.id,
+                    conversationType: conversationType || 'private',
+                });
+                // Return the result as an acknowledgment back to the client.
+                return {
+                    status: true,
+                    code: 200,
+                    conversation,
+                };
+            }
+            catch (error) {
+                return {
+                    status: false,
+                    code: 400,
+                    msg: error,
+                };
+            }
         });
     }
     handleJoinRoom(client, data) {
-        var _a;
-        console.log(`🟢 User ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.customer_id} joining room ${data.chatId}`);
-        client.join(data.chatId);
+        client.join(data.conversationId);
+        return { status: true, msg: `Joined room ${data.conversationId}` };
     }
-    handleLeaveRoom(chatId, client) {
-        client.leave(chatId);
-        console.log(`User ${client.data.user.customer_id} left room ${chatId}`);
-    }
-    handleTyping(data, client) {
-        const sender = client.data.user;
-        client.to(data.chatId).emit('typing', {
-            senderCustomerId: sender.customer_id,
-            isTyping: data.isTyping,
-        });
-    }
-    handleMessageRead(payload, client) {
+    handleSendMessage(client, data, ack) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { messageId, chatId, readerId, readAt } = payload;
-            if (!messageId || !chatId || !readerId || !readAt) {
-                console.warn('❌ Invalid message_read payload');
-                return;
-            }
-            // ✅ Optional: update the message in DB
-            yield this.chatService.markMessageAsRead(messageId, new Date(readAt));
-            // ✅ Broadcast to other users in the room
-            client.to(chatId).emit('message_read', {
-                messageId,
-                chatId,
-                readAt,
-                readerId,
-            });
-            console.log(`📨 [message_read] → broadcasted in ${chatId}`);
-        });
-    }
-    handleReadMessage(data, client) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const user = client.data.user;
-            // ✅ Step 1: Update last_read_at
-            yield this.chatService.updateLastReadAt(data.chatId, user.customer_id);
-            // ✅ Step 2: Notify other participants (optional)
-            const recipientId = yield this.chatService.getRecipientId(data.chatId, user.customer_id);
-            const recipientSocket = this.getSocketByUserId(recipientId);
-            if (recipientSocket) {
-                recipientSocket.emit('message_read', {
-                    chatId: data.chatId,
-                    userId: user.customer_id,
-                    readAt: new Date().toISOString(),
+            var _a, _b;
+            try {
+                const senderCustomerId = (_b = (_a = client.data.user) === null || _a === void 0 ? void 0 : _a.customer_id) !== null && _b !== void 0 ? _b : null;
+                const message = yield this.chatService.sendMessage(Object.assign(Object.assign({}, data), { senderCustomerId }));
+                const receiverContact = yield this.contactRepo.findOne({
+                    where: { customer_id: message.receiverCustomerId },
                 });
+                const senderContact = yield this.contactRepo.findOne({
+                    where: { customer_id: senderCustomerId },
+                });
+                // Update the chat list for the sender.
+                yield this.chatService.updateChatListForUser({
+                    conversationId: message.conversationId,
+                    customerId: message.senderCustomerId,
+                    chatType: 'private', // explicitly state the chat type for a private conversation
+                    // For the sender’s list, we include contact info about the receiver.
+                    contact: {
+                        customerId: message.receiverCustomerId,
+                        firstName: receiverContact === null || receiverContact === void 0 ? void 0 : receiverContact.first_name,
+                        lastName: receiverContact === null || receiverContact === void 0 ? void 0 : receiverContact.last_name,
+                        countryCode: receiverContact === null || receiverContact === void 0 ? void 0 : receiverContact.country_code,
+                        phoneNumber: receiverContact === null || receiverContact === void 0 ? void 0 : receiverContact.phone_number,
+                    },
+                    lastMessage: message.content || '',
+                    isNewMessage: false,
+                });
+                // Update the chat list for the receiver.
+                yield this.chatService.updateChatListForUser({
+                    conversationId: message.conversationId,
+                    customerId: message.receiverCustomerId,
+                    chatType: 'private', // for a private chat, this stays "private"
+                    // For the receiver’s list, include contact info about the sender.
+                    contact: {
+                        customerId: message.senderCustomerId,
+                        firstName: senderContact === null || senderContact === void 0 ? void 0 : senderContact.first_name,
+                        lastName: senderContact === null || senderContact === void 0 ? void 0 : senderContact.last_name,
+                        countryCode: senderContact === null || senderContact === void 0 ? void 0 : senderContact.country_code,
+                        phoneNumber: senderContact === null || senderContact === void 0 ? void 0 : senderContact.phone_number,
+                    },
+                    lastMessage: message.content || '',
+                    isNewMessage: true,
+                });
+                // Broadcast the new message to all clients in the conversation room.
+                // (Assuming your conversationId is the same as data.chatId.)
+                this.server.to(data.conversationId).emit('new_message', message);
+                // Acknowledge the sender with success.
+                if (ack)
+                    ack({ status: true, code: 200, message });
+                return { status: true, code: 200, message };
+            }
+            catch (error) {
+                // Send error acknowledgment.
+                if (ack)
+                    ack({ status: false, code: 400, msg: error });
+                return { status: false, code: 400, msg: error };
             }
         });
     }
-    handleSearchMessages(data, client) {
+    handleGetMessages(client, data, ack) {
         return __awaiter(this, void 0, void 0, function* () {
-            const messages = yield this.chatService.searchMessages(data.chatId, data.keyword);
-            client.emit('search_messages_result', {
-                chatId: data.chatId,
-                keyword: data.keyword,
-                results: messages,
-            });
+            try {
+                // Call the service to get the messages.
+                const messages = yield this.chatService.getMessages(data.conversationId, data.cursor, data.limit || 20);
+                // Optionally broadcast or simply acknowledge the client.
+                // Here we use the ack callback to send back the response.
+                if (ack) {
+                    ack({ status: true, code: 200, messages });
+                }
+                return { status: true, code: 200, messages };
+            }
+            catch (error) {
+                if (ack) {
+                    ack({ status: false, code: 400, msg: error });
+                }
+                return { status: false, code: 400, msg: error };
+            }
         });
     }
-    handleGetMessages(client, data) {
+    handleGetChatList(client, data, ack) {
         return __awaiter(this, void 0, void 0, function* () {
-            const messages = yield this.chatService.getMessages(data.chatId);
-            client.emit('messages_response', messages);
+            var _a;
+            try {
+                // Prefer extracting customerId from the authenticated socket
+                const customerId = data.customerId || ((_a = client.data.user) === null || _a === void 0 ? void 0 : _a.customerId);
+                if (!customerId) {
+                    throw new Error('Customer ID not provided');
+                }
+                const chatLists = yield this.chatService.getChatLists(customerId);
+                if (ack) {
+                    ack({ status: true, code: 200, chatLists });
+                }
+                return { status: true, code: 200, chatLists };
+            }
+            catch (error) {
+                if (ack) {
+                    ack({ status: false, code: 400, msg: error });
+                }
+                return { status: false, code: 400, msg: error };
+            }
+        });
+    }
+    handleMarkAsRead(client, data, ack) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                // Assume the customer ID is taken from client data
+                const customerId = (_a = client.data.user) === null || _a === void 0 ? void 0 : _a.customer_id;
+                if (!customerId) {
+                    throw new Error('Customer ID not found');
+                }
+                const updatedChatList = yield this.chatService.markChatListAsRead(data.conversationId, customerId);
+                if (ack) {
+                    ack({ status: true, code: 200, chatList: updatedChatList });
+                }
+                return { status: true, code: 200, chatList: updatedChatList };
+            }
+            catch (error) {
+                if (ack) {
+                    ack({ status: false, code: 400, msg: error });
+                }
+                return { status: false, code: 400, msg: error };
+            }
         });
     }
 };
@@ -183,21 +241,13 @@ __decorate([
     __metadata("design:type", socket_io_1.Server)
 ], ChatGateway.prototype, "server", void 0);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('chat_listing'),
+    (0, websockets_1.SubscribeMessage)('create_conversation'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
-    __metadata("design:returntype", void 0)
-], ChatGateway.prototype, "handleChatListing", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('send_message'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, send_message_dto_1.SendMessageDto]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
-], ChatGateway.prototype, "handleSendMessage", null);
+], ChatGateway.prototype, "handleCreateConversation", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('join_room'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
@@ -207,56 +257,42 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ChatGateway.prototype, "handleJoinRoom", null);
 __decorate([
-    (0, websockets_1.SubscribeMessage)('leave_room'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
+    (0, websockets_1.SubscribeMessage)('send_message'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, socket_io_1.Socket]),
-    __metadata("design:returntype", void 0)
-], ChatGateway.prototype, "handleLeaveRoom", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('user_typing'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
-    __metadata("design:returntype", void 0)
-], ChatGateway.prototype, "handleTyping", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('message_read'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:paramtypes", [Object, send_message_dto_1.SendMessageDto,
+        Function]),
     __metadata("design:returntype", Promise)
-], ChatGateway.prototype, "handleMessageRead", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('read_message'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
-    __metadata("design:returntype", Promise)
-], ChatGateway.prototype, "handleReadMessage", null);
-__decorate([
-    (0, websockets_1.SubscribeMessage)('search_messages'),
-    __param(0, (0, websockets_1.MessageBody)()),
-    __param(1, (0, websockets_1.ConnectedSocket)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
-    __metadata("design:returntype", Promise)
-], ChatGateway.prototype, "handleSearchMessages", null);
+], ChatGateway.prototype, "handleSendMessage", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('get_messages'),
     __param(0, (0, websockets_1.ConnectedSocket)()),
     __param(1, (0, websockets_1.MessageBody)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, get_message_dto_1.GetMessagesDto,
+        Function]),
     __metadata("design:returntype", Promise)
 ], ChatGateway.prototype, "handleGetMessages", null);
-exports.ChatGateway = ChatGateway = ChatGateway_1 = __decorate([
-    (0, common_1.UseGuards)(jwtWsAuth_guard_1.JwtWsAuthGuard),
+__decorate([
+    (0, websockets_1.SubscribeMessage)('get_chat_list'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Function]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleGetChatList", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('mark_as_read'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object, Function]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleMarkAsRead", null);
+exports.ChatGateway = ChatGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({ cors: true }),
+    __param(1, (0, typeorm_1.InjectRepository)(contact_entity_1.Contact)),
     __metadata("design:paramtypes", [chat_service_1.ChatService,
-        fcm_service_1.FcmService])
+        typeorm_2.Repository])
 ], ChatGateway);

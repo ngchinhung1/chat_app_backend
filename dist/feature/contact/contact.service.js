@@ -27,15 +27,11 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const user_entity_1 = require("../auth/entities/user.entity");
 const contact_entity_1 = require("./entities/contact.entity");
-const chat_list_entity_1 = require("../chat/entities/chat_list.entity");
-const chat_participant_entity_1 = require("../chat/entities/chat_participant.entity");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
 let ContactService = class ContactService {
-    constructor(contactRepo, userRepo, chatListRepo, chatParticipantRepo, i18n) {
+    constructor(contactRepo, userRepo, i18n) {
         this.contactRepo = contactRepo;
         this.userRepo = userRepo;
-        this.chatListRepo = chatListRepo;
-        this.chatParticipantRepo = chatParticipantRepo;
         this.i18n = i18n;
     }
     addContact(ownerId, dto, language) {
@@ -52,46 +48,12 @@ let ContactService = class ContactService {
                     data: {},
                 }, 400);
             }
-            // ✅ Step 1: Reuse existing private chat if exists
-            let chat = yield this.chatListRepo
-                .createQueryBuilder('chat')
-                .innerJoin('chat.participants', 'p1', 'p1.customer_id = :ownerId', { ownerId })
-                .innerJoin('chat.participants', 'p2', 'p2.customer_id = :contactId', { contactId: user.customer_id })
-                .where('chat.chat_type = :type', { type: 'private' })
-                .getOne();
-            // ✅ Step 2: Create chat if not found
-            if (!chat) {
-                chat = this.chatListRepo.create({ chat_type: 'private' });
-                yield this.chatListRepo.save(chat);
-                const owner = yield this.userRepo.findOneBy({ id: ownerId });
-                if (!owner)
-                    throw new common_1.NotFoundException('Owner not found');
-                const participants = [
-                    this.chatParticipantRepo.create({
-                        chat,
-                        user: owner,
-                        customer_id: owner.customer_id,
-                        role: 'member',
-                        joined_at: new Date(),
-                    }),
-                    this.chatParticipantRepo.create({
-                        chat,
-                        user,
-                        customer_id: user.customer_id,
-                        role: 'member',
-                        joined_at: new Date(),
-                    }),
-                ];
-                yield this.chatParticipantRepo.save(participants);
-            }
-            // ✅ Step 3: Update or Create contact
+            // ✅ Step 2: Update or Create contact
             let contact = yield this.contactRepo.findOne({
                 where: {
-                    owner: { id: ownerId },
                     country_code,
                     phone_number,
                 },
-                relations: ['owner'],
             });
             if (contact) {
                 contact.first_name = first_name;
@@ -100,7 +62,6 @@ let ContactService = class ContactService {
             }
             else {
                 contact = this.contactRepo.create({
-                    owner: { customer_id: ownerId },
                     customer_id: user.customer_id,
                     first_name,
                     last_name,
@@ -110,12 +71,10 @@ let ContactService = class ContactService {
             }
             yield this.contactRepo.save(contact);
             return {
-                chatId: chat.id,
                 first_name,
                 last_name,
                 country_code,
                 phone_number,
-                user_id: user.id.toString(),
                 customer_id: user.customer_id,
             };
         });
@@ -142,11 +101,7 @@ exports.ContactService = ContactService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(contact_entity_1.Contact)),
     __param(1, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __param(2, (0, typeorm_1.InjectRepository)(chat_list_entity_1.ChatListEntity)),
-    __param(3, (0, typeorm_1.InjectRepository)(chat_participant_entity_1.ChatParticipantEntity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
-        typeorm_2.Repository,
-        typeorm_2.Repository,
         typeorm_2.Repository,
         _i18n_service_1.I18nService])
 ], ContactService);

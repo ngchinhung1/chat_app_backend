@@ -17,12 +17,17 @@ exports.SendMessageDto = SendMessageDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "chat_id", void 0);
+], SendMessageDto.prototype, "conversationId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "sender_id", void 0);
+], SendMessageDto.prototype, "senderCustomerId", void 0);
 __decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SendMessageDto.prototype, "receiverCustomerId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SendMessageDto.prototype, "content", void 0);
@@ -30,26 +35,12 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SendMessageDto.prototype, "voiceUrl", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "timestamp", void 0);
+], SendMessageDto.prototype, "send_by", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SendMessageDto.prototype, "status", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "customer_id", void 0);
-__decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], SendMessageDto.prototype, "read_at", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

@@ -1,55 +1,64 @@
-import {Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index} from 'typeorm';
-import {MessageEntity} from "./message.entity";
-import {ChatParticipantEntity} from "./chat_participant.entity";
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    UpdateDateColumn,
+} from 'typeorm';
 
-@Entity('chat_list')
+@Entity('chat_lists')
 export class ChatListEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
+    @Column({nullable: false})
+    conversationId!: string;
+
+    @Column({nullable: false})
+    customerId!: string;
+
+    // Chat type: "private" or "group"
+    @Column({nullable: false, default: 'private'})
+    chat_type!: string;
+
+    // For private chats, store the contact's first name (optional)
     @Column({nullable: true})
-    user1_id?: string;
+    receiverFirstName?: string;
+
+    // For private chats, store the contact's last name (optional)
+    @Column({nullable: true})
+    receiverLastName?: string;
 
     @Column({nullable: true})
-    user2_id?: string;
+    receiverCountryCode?: string;
 
-    @Column({type: 'enum', enum: ['private', 'group'], default: 'private'})
-    chat_type?: 'private' | 'group';
-
+    // For private chats, store the contact's phone number (optional)
     @Column({nullable: true})
-    title?: string;
+    receiverPhoneNumber?: string;
 
+    // For group chats, store the group name or title.
+    @Column({nullable: true})
+    groupName?: string;
+
+    // Optionally, an avatar URL can be stored (useful for both private and group chats)
     @Column({nullable: true})
     avatar_url?: string;
 
-    @Column({nullable: true})
-    created_by?: string;
+    // A preview or summary of the last message.
+    @Column({type: 'text', nullable: true})
+    lastMessage?: string;
 
-    @Column({ type: 'timestamp', nullable: true })
-    created_at?: Date;
+    // Unread message count.
+    @Column({type: 'int', nullable: false, default: 0})
+    unreadCount!: number;
 
-    @Column({ type: 'timestamp', nullable: true })
-    updated_at?: Date;
-
-    @Column({ type: 'timestamp', nullable: true })
-    lastMessageAt?: Date;
-
-    @Column({nullable: true})
-    last_message_id?: string;
-
-    @Column({ nullable: true })
-    last_message?: string;
-
+    // You may also include a flag to mark active chat lists.
     @Column({default: true})
     is_active?: boolean;
 
-    @Column({type: 'json', nullable: true})
-    extra_metadata?: Record<string, any>;
+    @CreateDateColumn()
+    createdAt!: Date;
 
-    @OneToMany(() => ChatParticipantEntity, (participant) => participant.chat, { cascade: true, eager: true })
-    participants!: ChatParticipantEntity[];
-
-    @OneToMany(() => MessageEntity, (message) => message.chat, { cascade: true })
-    messages!: MessageEntity[];
-
+    @UpdateDateColumn()
+    updatedAt!: Date;
 }

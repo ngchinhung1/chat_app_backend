@@ -3,11 +3,11 @@ import {AppModule} from './app.module';
 import {ValidationPipe, BadRequestException} from '@nestjs/common';
 import {I18nService} from "./i18n/ i18n.service";
 import {ApiLoggerInterceptor} from "./log/log.interceptor";
-import {IoAdapter} from "@nestjs/platform-socket.io";
-import {socketAuthMiddleware} from "./middleware/socketAuthMiddleware";
+import {CustomIoAdapter} from "./types/custom-io.adapter";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    app.useWebSocketAdapter(new CustomIoAdapter(app));
     const i18nService = app.get(I18nService);
 
     app.useGlobalPipes(
@@ -38,19 +38,10 @@ async function bootstrap() {
             transform: true,
         }),
     );
-    app.useWebSocketAdapter(
-        new (class extends IoAdapter {
-            createIOServer(port: number, options?: any) {
-                const server = super.createIOServer(port, options);
-                server.of('/chat').use(socketAuthMiddleware);
-                return server;
-            }
-        })(app),
-    );
     app.useGlobalInterceptors(app.get(ApiLoggerInterceptor));
 
     await app.listen(3000, '0.0.0.0');
     console.log('✅ Server running on http://localhost:3000');
 }
 
-bootstrap();
+bootstrap().then(() => null);

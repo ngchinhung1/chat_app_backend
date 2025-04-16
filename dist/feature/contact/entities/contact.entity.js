@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Contact = void 0;
 const typeorm_1 = require("typeorm");
-const user_entity_1 = require("../../auth/entities/user.entity");
 let Contact = class Contact {
 };
 exports.Contact = Contact;
@@ -23,11 +22,6 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Contact.prototype, "customer_id", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.UserEntity),
-    (0, typeorm_1.JoinColumn)({ name: 'ownerId' }),
-    __metadata("design:type", user_entity_1.UserEntity)
-], Contact.prototype, "owner", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)

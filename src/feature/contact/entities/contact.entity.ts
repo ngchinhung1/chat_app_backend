@@ -2,12 +2,9 @@ import {
     Column,
     CreateDateColumn,
     Entity,
-    JoinColumn,
-    ManyToOne,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
-import {UserEntity} from "../../auth/entities/user.entity";
 
 @Entity('contacts')
 export class Contact {
@@ -16,10 +13,6 @@ export class Contact {
 
     @Column({nullable: true})
     customer_id?: string;
-
-    @ManyToOne(() => UserEntity)
-    @JoinColumn({ name: 'ownerId' })
-    owner!: UserEntity;
 
     @Column()
     first_name?: string;

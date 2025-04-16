@@ -1,19 +1,26 @@
 import {JwtModule} from '@nestjs/jwt';
 import {ConfigModule} from '@nestjs/config';
-import {MiddlewareConsumer, Module, NestModule} from "@nestjs/common";
+import {Module} from "@nestjs/common";
 import {ChatGateway} from "./chat.gateway";
 import {FcmModule} from "../../fcm/fcm.module";
 import {ChatService} from "./chat.service";
 import {TypeOrmModule} from "@nestjs/typeorm";
-import {ChatParticipantEntity} from "./entities/chat_participant.entity";
 import {MessageEntity} from "./entities/message.entity";
 import {ChatListEntity} from "./entities/chat_list.entity";
 import {UserEntity} from "../auth/entities/user.entity";
-import {socketAuthMiddleware} from "../../middleware/socketAuthMiddleware";
+import {ConversationEntity} from "./entities/conversation.entity";
+import {ConversationParticipantsEntity} from "./entities/conversation_participants.entity";
+import {Contact} from "../contact/entities/contact.entity";
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([ChatParticipantEntity, MessageEntity, ChatListEntity, UserEntity]),
+        TypeOrmModule.forFeature([
+            MessageEntity,
+            ChatListEntity,
+            UserEntity,
+            Contact,
+            ConversationEntity,
+            ConversationParticipantsEntity]),
         JwtModule.register({}),
         ConfigModule,
         FcmModule,
@@ -21,10 +28,5 @@ import {socketAuthMiddleware} from "../../middleware/socketAuthMiddleware";
     providers: [ChatGateway, ChatService],
     exports: [ChatGateway],
 })
-export class ChatModule implements NestModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer
-            .apply(socketAuthMiddleware)
-            .forRoutes(ChatGateway);
-    }
+export class ChatModule {
 }

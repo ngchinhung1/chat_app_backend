@@ -12,13 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserEntity = void 0;
 const typeorm_1 = require("typeorm");
 const engagement_identifiers_entity_1 = require("../../engagement-identifier/entities/engagement_identifiers.entity");
-const message_entity_1 = require("../../chat/entities/message.entity");
-const chat_participant_entity_1 = require("../../chat/entities/chat_participant.entity");
 let UserEntity = class UserEntity {
 };
 exports.UserEntity = UserEntity;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
     __metadata("design:type", String)
 ], UserEntity.prototype, "id", void 0);
 __decorate([
@@ -106,14 +104,6 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Boolean)
 ], UserEntity.prototype, "is_google_play", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => message_entity_1.MessageEntity, (message) => message.sender),
-    __metadata("design:type", Array)
-], UserEntity.prototype, "messages", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => chat_participant_entity_1.ChatParticipantEntity, (participant) => participant.user),
-    __metadata("design:type", Array)
-], UserEntity.prototype, "chatParticipants", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

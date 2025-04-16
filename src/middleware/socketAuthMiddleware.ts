@@ -1,27 +1,24 @@
-import jwt, {JwtPayload} from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import {AuthenticatedSocket} from "./authenticated-socket.interface";
+import {Socket} from 'socket.io';
+import * as jwt from 'jsonwebtoken';
 
-dotenv.config();
-
-const SECRET_KEY = process.env.JWT_SECRET || 'default_secret_key';
-
-export function socketAuthMiddleware(socket: AuthenticatedSocket, next: (err?: Error) => void) {
+export async function socketAuthMiddleware(
+    socket: Socket,
+    next: (err?: Error) => void
+) {
     const token = socket.handshake.auth?.token;
 
     if (!token) {
-        return next(new Error('Authentication error: No token'));
+        console.warn('❌ No JWT token found — rejecting connection');
+        return next(new Error('Authentication error'));
     }
 
     try {
-        const decoded = jwt.verify(token, SECRET_KEY) as JwtPayload & { customer_id: string };
-        if (!decoded.customer_id) {
-            return next(new Error('Authentication error: Invalid token payload'));
-        }
-
-        socket.user = decoded;
-        next();
-    } catch (err) {
-        return next(new Error('Authentication error: Invalid token'));
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+        socket.data = {user: decoded};
+        console.log('✅ JWT decoded for socket:', decoded);
+        return next();
+    } catch (error) {
+        console.error('❌ JWT decode failed:', error);
+        return next(new Error('Invalid token'));
     }
 }
