@@ -11,6 +11,9 @@ import {UserEntity} from "../auth/entities/user.entity";
 import {ConversationEntity} from "./entities/conversation.entity";
 import {ConversationParticipantsEntity} from "./entities/conversation_participants.entity";
 import {Contact} from "../contact/entities/contact.entity";
+import {ChatUploadService} from "./chat-upload.service";
+import {ChatUploadController} from "./upload.controller";
+import {I18nService} from "../../i18n/ i18n.service";
 
 @Module({
     imports: [
@@ -25,7 +28,8 @@ import {Contact} from "../contact/entities/contact.entity";
         ConfigModule,
         FcmModule,
     ],
-    providers: [ChatGateway, ChatService],
+    providers: [ChatGateway, ChatService, ChatUploadService, I18nService],
+    controllers: [ChatUploadController],
     exports: [ChatGateway],
 })
 export class ChatModule {

@@ -17,4 +17,8 @@ export class CreateContactDto {
     @IsOptional()
     @IsString()
     country_code?: string;
+
+    @IsOptional()
+    @IsString()
+    customerId?: string;
 }

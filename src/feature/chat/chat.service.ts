@@ -100,7 +100,7 @@ export class ChatService {
     }
 
     async sendMessage(data: SendMessageDto & { senderCustomerId: string }): Promise<MessageEntity> {
-        const {conversationId, content, file_type, senderCustomerId} = data;
+        const {conversationId, content, file_type, senderCustomerId, fileUrl} = data;
 
         // Fetch the conversation to ensure it exists.
         const conversation = await this.conversationRepository.findOne({where: {conversationId: conversationId}});
@@ -125,6 +125,8 @@ export class ChatService {
             receiverCustomerId,
             status: MessageStatus.SENT,
             fileType: file_type || 'text',
+            fileUrl: fileUrl || '',
+            createdAt: new Date(),
         });
 
         // Save and return the message.
@@ -154,7 +156,13 @@ export class ChatService {
         conversationId: string;
         customerId: string;
         chatType: string;
-        contact?: any;
+        contact?: {
+            customerId?: string,
+            firstName?: string,
+            lastName?: string,
+            countryCode?: string,
+            phoneNumber?: string
+        };
         lastMessage: string;
         groupName?: string;
         isNewMessage?: boolean;
@@ -179,12 +187,20 @@ export class ChatService {
                 unreadCount: data.isNewMessage ? 1 : 0,
             });
         } else {
+            chatList.receiverFirstName = data.contact?.firstName;
+            chatList.receiverLastName = data.contact?.lastName;
+            chatList.receiverCountryCode = data.contact?.countryCode;
+            chatList.receiverPhoneNumber = data.contact?.phoneNumber;
+            chatList.unreadCount = data.isNewMessage
+                ? chatList.unreadCount + 1
+                : 0;
+
             chatList.lastMessage = data.lastMessage;
             chatList.updatedAt = new Date();
             // If this update is due to a new unread message from the other party, increment unreadCount.
             // Otherwise (i.e. for the sender), you might want to reset unreadCount to 0.
             if (data.isNewMessage) {
-                chatList.unreadCount = chatList.unreadCount + 1;
+                chatList.unreadCount = chatList.unreadCount + 0;
             } else {
                 chatList.unreadCount = 0;
             }
@@ -233,6 +249,23 @@ export class ChatService {
         chatList.unreadCount = 0;
         chatList.updatedAt = new Date();
         return await this.chatListRepo.save(chatList);
+    }
+
+    toChatListDto(entity: ChatListEntity): ChatListDto {
+        return {
+            id: entity.id,
+            conversationId: entity.conversationId,
+            customerId: entity.customerId,
+            chatType: entity.chat_type,
+            firstName: entity.receiverFirstName,
+            lastName: entity.receiverLastName,
+            countryCode: entity.receiverCountryCode,
+            phoneNumber: entity.receiverPhoneNumber,
+            title: entity.groupName,
+            lastMessage: entity.lastMessage,
+            updatedAt: entity.updatedAt,
+            unreadCount: entity.unreadCount,
+        };
     }
 
 }

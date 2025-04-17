@@ -49,6 +49,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         }
     }
 
+    @SubscribeMessage('authenticate')
+    async handleAuth(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() payload: { customerId: string }
+    ) {
+        client.join(`user_${payload.customerId}`);
+    }
+
     @SubscribeMessage('create_conversation')
     async handleCreateConversation(
         @ConnectedSocket() client: AuthenticatedSocket,
@@ -91,11 +99,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 code: 200,
                 conversation,
             };
-        } catch (error) {
+        } catch (error: any) {
             return {
                 status: false,
                 code: 400,
-                msg: error,
+                msg: error.message,
             };
         }
     }
@@ -130,9 +138,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
             const senderContact = await this.contactRepo.findOne({
                 where: {customer_id: senderCustomerId},
             });
+            console.log(`🔌 customer_id: ${senderCustomerId}`);
 
             // Update the chat list for the sender.
-            await this.chatService.updateChatListForUser({
+            const updatedForSender = await this.chatService.updateChatListForUser({
                 conversationId: message.conversationId,
                 customerId: message.senderCustomerId,
                 chatType: 'private',  // explicitly state the chat type for a private conversation
@@ -147,15 +156,16 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 lastMessage: message.content || '',
                 isNewMessage: false,
             });
+            console.log(`🔌 updateChatListForUser sender: ${receiverContact?.phone_number}`);
 
             // Update the chat list for the receiver.
-            await this.chatService.updateChatListForUser({
+            const updatedForReceiver = await this.chatService.updateChatListForUser({
                 conversationId: message.conversationId,
                 customerId: message.receiverCustomerId,
                 chatType: 'private',  // for a private chat, this stays "private"
                 // For the receiver’s list, include contact info about the sender.
                 contact: {
-                    customerId: message.senderCustomerId,
+                    customerId: senderCustomerId,
                     firstName: senderContact?.first_name,
                     lastName: senderContact?.last_name,
                     countryCode: senderContact?.country_code,
@@ -164,18 +174,32 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 lastMessage: message.content || '',
                 isNewMessage: true,
             });
+            console.log(`🔌 updateChatListForUser receiver: ${senderContact?.phone_number}`);
 
             // Broadcast the new message to all clients in the conversation room.
             // (Assuming your conversationId is the same as data.chatId.)
-            this.server.to(data.conversationId).emit('new_message', message);
+            client.broadcast.to(data.conversationId).emit('new_message', message);
+
+            // now map each entity into the DTO shape…
+            const senderDto = this.chatService.toChatListDto(updatedForSender);
+            const receiverDto = this.chatService.toChatListDto(updatedForReceiver);
+
+            // …and broadcast them
+            this.server
+                .to(`user_${message.senderCustomerId}`)
+                .emit('chat_list_update', senderDto);
+
+            this.server
+                .to(`user_${message.receiverCustomerId}`)
+                .emit('chat_list_update', receiverDto);
 
             // Acknowledge the sender with success.
             if (ack) ack({status: true, code: 200, message});
             return {status: true, code: 200, message};
-        } catch (error) {
+        } catch (error: any) {
             // Send error acknowledgment.
-            if (ack) ack({status: false, code: 400, msg: error});
-            return {status: false, code: 400, msg: error};
+            if (ack) ack({status: false, code: 400, msg: error.message});
+            return {status: false, code: 400, msg: error.message};
         }
     }
 
@@ -199,11 +223,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 ack({status: true, code: 200, messages});
             }
             return {status: true, code: 200, messages};
-        } catch (error) {
+        } catch (error: any) {
             if (ack) {
-                ack({status: false, code: 400, msg: error});
+                ack({status: false, code: 400, msg: error.message});
             }
-            return {status: false, code: 400, msg: error};
+            return {status: false, code: 400, msg: error.message};
         }
     }
 
@@ -225,11 +249,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 ack({status: true, code: 200, chatLists});
             }
             return {status: true, code: 200, chatLists};
-        } catch (error) {
+        } catch (error: any) {
             if (ack) {
-                ack({status: false, code: 400, msg: error});
+                ack({status: false, code: 400, msg: error.message});
             }
-            return {status: false, code: 400, msg: error};
+            return {status: false, code: 400, msg: error.message};
         }
     }
 
@@ -250,11 +274,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
                 ack({status: true, code: 200, chatList: updatedChatList});
             }
             return {status: true, code: 200, chatList: updatedChatList};
-        } catch (error) {
+        } catch (error: any) {
             if (ack) {
-                ack({status: false, code: 400, msg: error});
+                ack({status: false, code: 400, msg: error.message});
             }
-            return {status: false, code: 400, msg: error};
+            return {status: false, code: 400, msg: error.message};
         }
     }
 

@@ -16,5 +16,6 @@
   "USER_PROFILE_UPDATED_SUCCESSFULLY": "Profile updated successfully",
   "USER_PROFILE_CREATED_SUCCESSFULLY": "Profile created successfully",
   "IMAGE_UPLOADED_SUCCESSFULLY": "Image uploaded successfully",
-  "USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP": "This User is not using our Chat App. Please ask them to download the App to use this feature."
+  "USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP": "This User is not using our Chat App. Please ask them to download the App to use this feature.",
+  "CANNOT_CHAT_SELF": "User cannot chat with itself"
 }

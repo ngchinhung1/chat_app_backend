@@ -101,7 +101,7 @@ let ChatService = class ChatService {
     }
     sendMessage(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { conversationId, content, file_type, senderCustomerId } = data;
+            const { conversationId, content, file_type, senderCustomerId, fileUrl } = data;
             // Fetch the conversation to ensure it exists.
             const conversation = yield this.conversationRepository.findOne({ where: { conversationId: conversationId } });
             if (!conversation) {
@@ -124,6 +124,8 @@ let ChatService = class ChatService {
                 receiverCustomerId,
                 status: message_entity_1.MessageStatus.SENT,
                 fileType: file_type || 'text',
+                fileUrl: fileUrl || '',
+                createdAt: new Date(),
             });
             // Save and return the message.
             const savedMessage = yield this.messageRepo.save(message);
@@ -147,7 +149,7 @@ let ChatService = class ChatService {
     }
     updateChatListForUser(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a, _b, _c, _d;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             let chatList = yield this.chatListRepo.findOne({
                 where: { conversationId: data.conversationId, customerId: data.customerId },
             });
@@ -168,12 +170,19 @@ let ChatService = class ChatService {
                 });
             }
             else {
+                chatList.receiverFirstName = (_e = data.contact) === null || _e === void 0 ? void 0 : _e.firstName;
+                chatList.receiverLastName = (_f = data.contact) === null || _f === void 0 ? void 0 : _f.lastName;
+                chatList.receiverCountryCode = (_g = data.contact) === null || _g === void 0 ? void 0 : _g.countryCode;
+                chatList.receiverPhoneNumber = (_h = data.contact) === null || _h === void 0 ? void 0 : _h.phoneNumber;
+                chatList.unreadCount = data.isNewMessage
+                    ? chatList.unreadCount + 1
+                    : 0;
                 chatList.lastMessage = data.lastMessage;
                 chatList.updatedAt = new Date();
                 // If this update is due to a new unread message from the other party, increment unreadCount.
                 // Otherwise (i.e. for the sender), you might want to reset unreadCount to 0.
                 if (data.isNewMessage) {
-                    chatList.unreadCount = chatList.unreadCount + 1;
+                    chatList.unreadCount = chatList.unreadCount + 0;
                 }
                 else {
                     chatList.unreadCount = 0;
@@ -225,6 +234,22 @@ let ChatService = class ChatService {
             chatList.updatedAt = new Date();
             return yield this.chatListRepo.save(chatList);
         });
+    }
+    toChatListDto(entity) {
+        return {
+            id: entity.id,
+            conversationId: entity.conversationId,
+            customerId: entity.customerId,
+            chatType: entity.chat_type,
+            firstName: entity.receiverFirstName,
+            lastName: entity.receiverLastName,
+            countryCode: entity.receiverCountryCode,
+            phoneNumber: entity.receiverPhoneNumber,
+            title: entity.groupName,
+            lastMessage: entity.lastMessage,
+            updatedAt: entity.updatedAt,
+            unreadCount: entity.unreadCount,
+        };
     }
 };
 exports.ChatService = ChatService;

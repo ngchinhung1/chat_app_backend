@@ -25,7 +25,7 @@ export class MessageEntity {
     @Column({nullable: false})
     sendBy!: string;
 
-    @Column({type: 'text'})
+    @Column({type: 'text', nullable: true})
     content?: string;
 
     @Column({nullable: false})
@@ -45,6 +45,9 @@ export class MessageEntity {
     // Optional field for file type if message contains media. Default is 'text'.
     @Column({nullable: true, default: 'text'})
     fileType?: string;
+
+    @Column({nullable: true})
+    fileUrl?: string;
 
     @CreateDateColumn()
     createdAt!: Date;

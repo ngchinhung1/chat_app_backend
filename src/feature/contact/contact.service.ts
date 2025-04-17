@@ -18,7 +18,7 @@ export class ContactService {
     }
 
     async addContact(ownerId: string, dto: CreateContactDto, language: string) {
-        const {country_code, phone_number, first_name, last_name} = dto;
+        const {country_code, phone_number, first_name, last_name, customerId} = dto;
 
         const user = await this.userRepo.findOne({
             where: {country_code, phone_number},
@@ -29,6 +29,18 @@ export class ContactService {
                 {
                     status: false,
                     msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                    code: 400,
+                    data: {},
+                },
+                400,
+            );
+        }
+
+        if (user.customer_id == customerId) {
+            throw new HttpException(
+                {
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'CANNOT_CHAT_SELF') || 'User cannot chat with itself',
                     code: 400,
                     data: {},
                 },

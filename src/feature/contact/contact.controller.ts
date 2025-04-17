@@ -26,11 +26,11 @@ export class ContactController {
                 data: result,
                 msg: 'SUCCESS',
             };
-        } catch (error) {
+        } catch (error: any) {
             return {
                 status: false,
                 code: 400,
-                msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                msg: (error.response?.msg as string) || this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
                 data: null,
             };
         }

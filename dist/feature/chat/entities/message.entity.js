@@ -35,7 +35,7 @@ __decorate([
     __metadata("design:type", String)
 ], MessageEntity.prototype, "sendBy", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'text' }),
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "content", void 0);
 __decorate([
@@ -58,6 +58,10 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true, default: 'text' }),
     __metadata("design:type", String)
 ], MessageEntity.prototype, "fileType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], MessageEntity.prototype, "fileUrl", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

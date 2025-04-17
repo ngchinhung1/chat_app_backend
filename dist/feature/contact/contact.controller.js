@@ -34,6 +34,7 @@ let ContactController = class ContactController {
     }
     addContact(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const ownerId = req.user.customer_id;
             const language = req.headers['language'] || 'en';
             try {
@@ -49,7 +50,7 @@ let ContactController = class ContactController {
                 return {
                     status: false,
                     code: 400,
-                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                    msg: ((_a = error.response) === null || _a === void 0 ? void 0 : _a.msg) || this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
                     data: null,
                 };
             }

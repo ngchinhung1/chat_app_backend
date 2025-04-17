@@ -58,6 +58,11 @@ let ChatGateway = class ChatGateway {
             this.connectedClients.delete(user.customer_id);
         }
     }
+    handleAuth(client, payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            client.join(`user_${payload.customerId}`);
+        });
+    }
     handleCreateConversation(client, data) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a, _b;
@@ -99,7 +104,7 @@ let ChatGateway = class ChatGateway {
                 return {
                     status: false,
                     code: 400,
-                    msg: error,
+                    msg: error.message,
                 };
             }
         });
@@ -120,8 +125,9 @@ let ChatGateway = class ChatGateway {
                 const senderContact = yield this.contactRepo.findOne({
                     where: { customer_id: senderCustomerId },
                 });
+                console.log(`🔌 customer_id: ${senderCustomerId}`);
                 // Update the chat list for the sender.
-                yield this.chatService.updateChatListForUser({
+                const updatedForSender = yield this.chatService.updateChatListForUser({
                     conversationId: message.conversationId,
                     customerId: message.senderCustomerId,
                     chatType: 'private', // explicitly state the chat type for a private conversation
@@ -136,14 +142,15 @@ let ChatGateway = class ChatGateway {
                     lastMessage: message.content || '',
                     isNewMessage: false,
                 });
+                console.log(`🔌 updateChatListForUser sender: ${receiverContact === null || receiverContact === void 0 ? void 0 : receiverContact.phone_number}`);
                 // Update the chat list for the receiver.
-                yield this.chatService.updateChatListForUser({
+                const updatedForReceiver = yield this.chatService.updateChatListForUser({
                     conversationId: message.conversationId,
                     customerId: message.receiverCustomerId,
                     chatType: 'private', // for a private chat, this stays "private"
                     // For the receiver’s list, include contact info about the sender.
                     contact: {
-                        customerId: message.senderCustomerId,
+                        customerId: senderCustomerId,
                         firstName: senderContact === null || senderContact === void 0 ? void 0 : senderContact.first_name,
                         lastName: senderContact === null || senderContact === void 0 ? void 0 : senderContact.last_name,
                         countryCode: senderContact === null || senderContact === void 0 ? void 0 : senderContact.country_code,
@@ -152,9 +159,20 @@ let ChatGateway = class ChatGateway {
                     lastMessage: message.content || '',
                     isNewMessage: true,
                 });
+                console.log(`🔌 updateChatListForUser receiver: ${senderContact === null || senderContact === void 0 ? void 0 : senderContact.phone_number}`);
                 // Broadcast the new message to all clients in the conversation room.
                 // (Assuming your conversationId is the same as data.chatId.)
-                this.server.to(data.conversationId).emit('new_message', message);
+                client.broadcast.to(data.conversationId).emit('new_message', message);
+                // now map each entity into the DTO shape…
+                const senderDto = this.chatService.toChatListDto(updatedForSender);
+                const receiverDto = this.chatService.toChatListDto(updatedForReceiver);
+                // …and broadcast them
+                this.server
+                    .to(`user_${message.senderCustomerId}`)
+                    .emit('chat_list_update', senderDto);
+                this.server
+                    .to(`user_${message.receiverCustomerId}`)
+                    .emit('chat_list_update', receiverDto);
                 // Acknowledge the sender with success.
                 if (ack)
                     ack({ status: true, code: 200, message });
@@ -163,8 +181,8 @@ let ChatGateway = class ChatGateway {
             catch (error) {
                 // Send error acknowledgment.
                 if (ack)
-                    ack({ status: false, code: 400, msg: error });
-                return { status: false, code: 400, msg: error };
+                    ack({ status: false, code: 400, msg: error.message });
+                return { status: false, code: 400, msg: error.message };
             }
         });
     }
@@ -182,9 +200,9 @@ let ChatGateway = class ChatGateway {
             }
             catch (error) {
                 if (ack) {
-                    ack({ status: false, code: 400, msg: error });
+                    ack({ status: false, code: 400, msg: error.message });
                 }
-                return { status: false, code: 400, msg: error };
+                return { status: false, code: 400, msg: error.message };
             }
         });
     }
@@ -205,9 +223,9 @@ let ChatGateway = class ChatGateway {
             }
             catch (error) {
                 if (ack) {
-                    ack({ status: false, code: 400, msg: error });
+                    ack({ status: false, code: 400, msg: error.message });
                 }
-                return { status: false, code: 400, msg: error };
+                return { status: false, code: 400, msg: error.message };
             }
         });
     }
@@ -228,9 +246,9 @@ let ChatGateway = class ChatGateway {
             }
             catch (error) {
                 if (ack) {
-                    ack({ status: false, code: 400, msg: error });
+                    ack({ status: false, code: 400, msg: error.message });
                 }
-                return { status: false, code: 400, msg: error };
+                return { status: false, code: 400, msg: error.message };
             }
         });
     }
@@ -240,6 +258,14 @@ __decorate([
     (0, websockets_1.WebSocketServer)(),
     __metadata("design:type", socket_io_1.Server)
 ], ChatGateway.prototype, "server", void 0);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('authenticate'),
+    __param(0, (0, websockets_1.ConnectedSocket)()),
+    __param(1, (0, websockets_1.MessageBody)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
+    __metadata("design:returntype", Promise)
+], ChatGateway.prototype, "handleAuth", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('create_conversation'),
     __param(0, (0, websockets_1.ConnectedSocket)()),

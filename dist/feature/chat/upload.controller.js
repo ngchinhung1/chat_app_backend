@@ -21,51 +21,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UploadController = void 0;
+exports.ChatUploadController = void 0;
 const common_1 = require("@nestjs/common");
+const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
 const platform_express_1 = require("@nestjs/platform-express");
-const storage_service_1 = require("../../shared/storage/storage.service");
-let UploadController = class UploadController {
-    constructor(storageService) {
-        this.storageService = storageService;
+const _i18n_service_1 = require("../../i18n/ i18n.service");
+const chat_upload_service_1 = require("./chat-upload.service");
+let ChatUploadController = class ChatUploadController {
+    constructor(uploadService, i18n) {
+        this.uploadService = uploadService;
+        this.i18n = i18n;
     }
-    uploadFile(file) {
+    uploadChatFile(file, req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const url = yield this.storageService.upload(file); // local or s3
-            const type = this.getFileType(file.mimetype);
+            // service handles saving to disk or S3, returns a public URL
+            const fileUrl = yield this.uploadService.uploadChatFile(file);
+            // pick up the language header if you need localized messages
+            const language = req.headers['language'] || 'en';
             return {
                 status: true,
                 code: 200,
                 data: {
-                    url,
-                    type,
-                    originalName: file.originalname,
-                    mimeType: file.mimetype,
-                    size: file.size,
+                    file_url: fileUrl,
                 },
-                msg: 'File uploaded successfully',
+                msg: this.i18n.getMessage(language, 'FILE_UPLOADED_SUCCESSFULLY'),
             };
         });
     }
-    getFileType(mime) {
-        if (mime.startsWith('image/'))
-            return 'image';
-        if (mime.startsWith('video/'))
-            return 'video';
-        return 'file';
-    }
 };
-exports.UploadController = UploadController;
+exports.ChatUploadController = ChatUploadController;
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
-], UploadController.prototype, "uploadFile", null);
-exports.UploadController = UploadController = __decorate([
-    (0, common_1.Controller)('upload'),
-    __param(0, (0, common_1.Inject)('StorageService')),
-    __metadata("design:paramtypes", [storage_service_1.StorageService])
-], UploadController);
+], ChatUploadController.prototype, "uploadChatFile", null);
+exports.ChatUploadController = ChatUploadController = __decorate([
+    (0, common_1.Controller)('upload-file'),
+    __metadata("design:paramtypes", [chat_upload_service_1.ChatUploadService,
+        _i18n_service_1.I18nService])
+], ChatUploadController);

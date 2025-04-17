@@ -20,6 +20,9 @@ const user_entity_1 = require("../auth/entities/user.entity");
 const conversation_entity_1 = require("./entities/conversation.entity");
 const conversation_participants_entity_1 = require("./entities/conversation_participants.entity");
 const contact_entity_1 = require("../contact/entities/contact.entity");
+const chat_upload_service_1 = require("./chat-upload.service");
+const upload_controller_1 = require("./upload.controller");
+const _i18n_service_1 = require("../../i18n/ i18n.service");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
@@ -38,7 +41,8 @@ exports.ChatModule = ChatModule = __decorate([
             config_1.ConfigModule,
             fcm_module_1.FcmModule,
         ],
-        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService],
+        providers: [chat_gateway_1.ChatGateway, chat_service_1.ChatService, chat_upload_service_1.ChatUploadService, _i18n_service_1.I18nService],
+        controllers: [upload_controller_1.ChatUploadController],
         exports: [chat_gateway_1.ChatGateway],
     })
 ], ChatModule);

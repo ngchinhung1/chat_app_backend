@@ -24,4 +24,8 @@ export class SendMessageDto {
 
     @IsString()
     file_type!: string;
+
+    @IsOptional()
+    @IsString()
+    fileUrl?: string;
 }
