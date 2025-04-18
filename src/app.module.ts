@@ -14,11 +14,17 @@ import {I18nModule} from "./i18n/i18n.module";
 import {JwtModule} from "@nestjs/jwt";
 import {VoiceUploadModule} from "./feature/chat/voice-upload.module";
 import {ContactModule} from "./feature/contact/contact.module";
+import {ServeStaticModule} from '@nestjs/serve-static';
+import {join} from 'path';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+        }),
+        ServeStaticModule.forRoot({
+            serveRoot: '/uploads',                        // URL path
+            rootPath: join(__dirname, '..', 'uploads'),   // filesystem folder
         }),
 
         JwtModule.registerAsync({

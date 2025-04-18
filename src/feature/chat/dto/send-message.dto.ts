@@ -23,7 +23,7 @@ export class SendMessageDto {
     status?: string;
 
     @IsString()
-    file_type!: string;
+    fileType!: string;
 
     @IsOptional()
     @IsString()

@@ -101,7 +101,7 @@ let ChatService = class ChatService {
     }
     sendMessage(data) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { conversationId, content, file_type, senderCustomerId, fileUrl } = data;
+            const { conversationId, content, fileType, senderCustomerId } = data;
             // Fetch the conversation to ensure it exists.
             const conversation = yield this.conversationRepository.findOne({ where: { conversationId: conversationId } });
             if (!conversation) {
@@ -123,13 +123,12 @@ let ChatService = class ChatService {
                 senderCustomerId,
                 receiverCustomerId,
                 status: message_entity_1.MessageStatus.SENT,
-                fileType: file_type || 'text',
-                fileUrl: fileUrl || '',
+                fileType: fileType || 'text',
+                fileUrl: fileType !== 'text' ? content : '',
                 createdAt: new Date(),
             });
             // Save and return the message.
-            const savedMessage = yield this.messageRepo.save(message);
-            return savedMessage;
+            return yield this.messageRepo.save(message);
         });
     }
     getMessages(conversationId_1, cursor_1) {
@@ -181,12 +180,6 @@ let ChatService = class ChatService {
                 chatList.updatedAt = new Date();
                 // If this update is due to a new unread message from the other party, increment unreadCount.
                 // Otherwise (i.e. for the sender), you might want to reset unreadCount to 0.
-                if (data.isNewMessage) {
-                    chatList.unreadCount = chatList.unreadCount + 0;
-                }
-                else {
-                    chatList.unreadCount = 0;
-                }
             }
             return yield this.chatListRepo.save(chatList);
         });

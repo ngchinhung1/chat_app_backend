@@ -100,7 +100,7 @@ export class ChatService {
     }
 
     async sendMessage(data: SendMessageDto & { senderCustomerId: string }): Promise<MessageEntity> {
-        const {conversationId, content, file_type, senderCustomerId, fileUrl} = data;
+        const {conversationId, content, fileType, senderCustomerId} = data;
 
         // Fetch the conversation to ensure it exists.
         const conversation = await this.conversationRepository.findOne({where: {conversationId: conversationId}});
@@ -124,14 +124,13 @@ export class ChatService {
             senderCustomerId,
             receiverCustomerId,
             status: MessageStatus.SENT,
-            fileType: file_type || 'text',
-            fileUrl: fileUrl || '',
+            fileType: fileType || 'text',
+            fileUrl: fileType !== 'text' ? content : '',
             createdAt: new Date(),
         });
 
         // Save and return the message.
-        const savedMessage = await this.messageRepo.save(message);
-        return savedMessage;
+        return await this.messageRepo.save(message);
     }
 
     async getMessages(conversationId: string, cursor?: string, limit = 20): Promise<MessageEntity[]> {
@@ -199,11 +198,6 @@ export class ChatService {
             chatList.updatedAt = new Date();
             // If this update is due to a new unread message from the other party, increment unreadCount.
             // Otherwise (i.e. for the sender), you might want to reset unreadCount to 0.
-            if (data.isNewMessage) {
-                chatList.unreadCount = chatList.unreadCount + 0;
-            } else {
-                chatList.unreadCount = 0;
-            }
         }
         return await this.chatListRepo.save(chatList);
     }

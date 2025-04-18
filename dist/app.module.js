@@ -32,6 +32,8 @@ const i18n_module_1 = require("./i18n/i18n.module");
 const jwt_1 = require("@nestjs/jwt");
 const voice_upload_module_1 = require("./feature/chat/voice-upload.module");
 const contact_module_1 = require("./feature/contact/contact.module");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(api_logger_middleware_1.ApiLoggerMiddleware).forRoutes('*');
@@ -43,6 +45,10 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
+            }),
+            serve_static_1.ServeStaticModule.forRoot({
+                serveRoot: '/uploads', // URL path
+                rootPath: (0, path_1.join)(__dirname, '..', 'uploads'), // filesystem folder
             }),
             jwt_1.JwtModule.registerAsync({
                 useFactory: (configService) => __awaiter(void 0, void 0, void 0, function* () {

@@ -4,9 +4,12 @@ import {ValidationPipe, BadRequestException} from '@nestjs/common';
 import {I18nService} from "./i18n/ i18n.service";
 import {ApiLoggerInterceptor} from "./log/log.interceptor";
 import {CustomIoAdapter} from "./types/custom-io.adapter";
+import * as express from 'express';
+import { join }   from 'path';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
     app.useWebSocketAdapter(new CustomIoAdapter(app));
     const i18nService = app.get(I18nService);
 

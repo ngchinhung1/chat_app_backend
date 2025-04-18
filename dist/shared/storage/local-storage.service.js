@@ -61,7 +61,7 @@ let LocalStorageService = class LocalStorageService {
             }
             const filePath = path.join(uploadPath, file.originalname);
             fs.writeFileSync(filePath, file.buffer);
-            return `/uploads/${file.originalname}`;
+            return `uploads/${file.originalname}`;
         });
     }
 };
