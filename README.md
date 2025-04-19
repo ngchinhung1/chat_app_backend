@@ -19,6 +19,7 @@ This is the backend service for the Chat Application, built using Node.js, Expre
 ## 📁 Folder Structure
 
 ```
+├── uploads/           # Add uploads folder for test in local to store file
 ├── src/               # Application source code
 │   ├── controllers/   # Route controllers
 │   ├── services/      # Business logic
