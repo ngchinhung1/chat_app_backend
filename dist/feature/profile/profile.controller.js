@@ -28,6 +28,7 @@ const updateProfile_dto_1 = require("./dto/updateProfile.dto");
 const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
 const platform_express_1 = require("@nestjs/platform-express");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
+const editProfile_dto_1 = require("./dto/editProfile.dto");
 let ProfileController = class ProfileController {
     constructor(profileService, i18n) {
         this.profileService = profileService;
@@ -52,6 +53,29 @@ let ProfileController = class ProfileController {
             };
         });
     }
+    editProfile(dto, file, req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const ownerId = req.user.customer_id;
+            const language = req.headers['language'] || 'en';
+            dto.customer_id = ownerId;
+            try {
+                if (file) {
+                    dto.profile_image = yield this.profileService.uploadProfileImage(file);
+                }
+                return yield this.profileService.editProfile(dto, language);
+            }
+            catch (error) {
+                return {
+                    status: false,
+                    code: 400,
+                    data: null,
+                    msg: ((_a = error.response) === null || _a === void 0 ? void 0 : _a.msg) ||
+                        this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                };
+            }
+        });
+    }
 };
 exports.ProfileController = ProfileController;
 __decorate([
@@ -72,6 +96,18 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "uploadProfileImage", null);
+__decorate([
+    (0, common_1.Post)('edit-profile'),
+    (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [editProfile_dto_1.EditProfileDto, Object, Object]),
+    __metadata("design:returntype", Promise)
+], ProfileController.prototype, "editProfile", null);
 exports.ProfileController = ProfileController = __decorate([
     (0, common_1.Controller)('profile'),
     __metadata("design:paramtypes", [profile_service_1.ProfileService,

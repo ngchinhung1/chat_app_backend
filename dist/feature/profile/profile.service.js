@@ -28,17 +28,13 @@ const typeorm_2 = require("typeorm");
 const base_response_1 = require("../../utils/base-response");
 const profile_entity_1 = require("./entities/profile.entity");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
-const local_storage_service_1 = require("../../shared/storage/local-storage.service");
-const s3_storage_service_1 = require("../../shared/storage/s3-storage.service");
 const uploaded_files_entity_1 = require("../../shared/entities/uploaded_files.entity");
 const user_entity_1 = require("../auth/entities/user.entity");
 const storage_service_1 = require("../../shared/storage/storage.service");
 let ProfileService = class ProfileService {
-    constructor(profileRepo, i18n, localStorageService, s3StorageService, uploadedFileRepo, userRepo, storageService) {
+    constructor(profileRepo, i18n, uploadedFileRepo, userRepo, storageService) {
         this.profileRepo = profileRepo;
         this.i18n = i18n;
-        this.localStorageService = localStorageService;
-        this.s3StorageService = s3StorageService;
         this.uploadedFileRepo = uploadedFileRepo;
         this.userRepo = userRepo;
         this.storageService = storageService;
@@ -121,18 +117,61 @@ let ProfileService = class ProfileService {
             return imageUrl;
         });
     }
+    editProfile(dto, language) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // 1. Verify user exists
+            const user = yield this.userRepo.findOne({
+                where: { customer_id: dto.customer_id },
+            });
+            if (!user) {
+                throw new common_1.HttpException({
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                    code: 400,
+                    data: {},
+                }, 400);
+            }
+            user.first_name = dto.first_name;
+            user.last_name = dto.last_name;
+            user.profile_image = dto.profile_image;
+            yield this.userRepo.save(user);
+            // 2. Load or create profile record
+            let profile = yield this.profileRepo.findOne({
+                where: { customer_id: dto.customer_id },
+            });
+            if (!profile) {
+                profile = this.profileRepo.create({ customer_id: dto.customer_id });
+            }
+            // 3. Assign new values
+            profile.first_name = dto.first_name;
+            profile.last_name = dto.last_name;
+            profile.profile_image = dto.profile_image;
+            // 4. Persist
+            profile = yield this.profileRepo.save(profile);
+            return {
+                status: true,
+                code: 200,
+                data: {
+                    customer_id: profile.customer_id,
+                    first_name: profile.first_name,
+                    last_name: profile.last_name,
+                    profile_image: profile.profile_image,
+                    updated_at: profile.updated_at,
+                },
+                msg: this.i18n.getMessage(language, 'USER_PROFILE_UPDATED_SUCCESSFULLY'),
+            };
+        });
+    }
 };
 exports.ProfileService = ProfileService;
 exports.ProfileService = ProfileService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(profile_entity_1.Profile)),
-    __param(4, (0, typeorm_1.InjectRepository)(uploaded_files_entity_1.UploadedFile)),
-    __param(5, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __param(6, (0, common_1.Inject)('StorageService')),
+    __param(2, (0, typeorm_1.InjectRepository)(uploaded_files_entity_1.UploadedFile)),
+    __param(3, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
+    __param(4, (0, common_1.Inject)('StorageService')),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         _i18n_service_1.I18nService,
-        local_storage_service_1.LocalStorageService,
-        s3_storage_service_1.S3StorageService,
         typeorm_2.Repository,
         typeorm_2.Repository,
         storage_service_1.StorageService])

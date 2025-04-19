@@ -1,12 +1,10 @@
-import {Inject, Injectable} from '@nestjs/common';
+import {HttpException, Inject, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {UpdateProfileDto} from './dto/updateProfile.dto';
 import {BaseResponse} from '../../utils/base-response';
 import {Profile} from "./entities/profile.entity";
 import {I18nService} from "../../i18n/ i18n.service";
-import {LocalStorageService} from "../../shared/storage/local-storage.service";
-import {S3StorageService} from "../../shared/storage/s3-storage.service";
 import {UploadedFile} from '../../shared/entities/uploaded_files.entity';
 import {UserEntity} from "../auth/entities/user.entity";
 import {StorageService} from "../../shared/storage/storage.service";
@@ -17,8 +15,6 @@ export class ProfileService {
         @InjectRepository(Profile)
         private readonly profileRepo: Repository<Profile>,
         private readonly i18n: I18nService,
-        private readonly localStorageService: LocalStorageService,
-        private readonly s3StorageService: S3StorageService,
         @InjectRepository(UploadedFile)
         private readonly uploadedFileRepo: Repository<UploadedFile>,
         @InjectRepository(UserEntity)
@@ -116,5 +112,60 @@ export class ProfileService {
         });
 
         return imageUrl;
+    }
+
+    async editProfile(
+        dto: UpdateProfileDto,
+        language: string | undefined,
+    ): Promise<BaseResponse<{}>> {
+        // 1. Verify user exists
+        const user = await this.userRepo.findOne({
+            where: {customer_id: dto.customer_id},
+        });
+        if (!user) {
+            throw new HttpException(
+                {
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                    code: 400,
+                    data: {},
+                },
+                400,
+            );
+        }
+
+        user.first_name = dto.first_name;
+        user.last_name = dto.last_name;
+        user.profile_image = dto.profile_image;
+        await this.userRepo.save(user);
+
+        // 2. Load or create profile record
+        let profile = await this.profileRepo.findOne({
+            where: {customer_id: dto.customer_id},
+        });
+        if (!profile) {
+            profile = this.profileRepo.create({customer_id: dto.customer_id});
+        }
+
+        // 3. Assign new values
+        profile.first_name = dto.first_name;
+        profile.last_name = dto.last_name;
+        profile.profile_image = dto.profile_image;
+
+        // 4. Persist
+        profile = await this.profileRepo.save(profile);
+
+        return {
+            status: true,
+            code: 200,
+            data: {
+                customer_id: profile.customer_id,
+                first_name: profile.first_name,
+                last_name: profile.last_name,
+                profile_image: profile.profile_image,
+                updated_at: profile.updated_at,
+            },
+            msg: this.i18n.getMessage(language, 'USER_PROFILE_UPDATED_SUCCESSFULLY'),
+        };
     }
 }
