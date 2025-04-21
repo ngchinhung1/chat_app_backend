@@ -37,10 +37,10 @@ let ContactService = class ContactService {
     addContact(ownerId, dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
             const { country_code, phone_number, first_name, last_name, customerId } = dto;
-            const user = yield this.userRepo.findOne({
+            const receiver = yield this.userRepo.findOne({
                 where: { country_code, phone_number },
             });
-            if (!user) {
+            if (!receiver) {
                 throw new common_1.HttpException({
                     status: false,
                     msg: this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
@@ -48,7 +48,7 @@ let ContactService = class ContactService {
                     data: {},
                 }, 400);
             }
-            if (user.customer_id == customerId) {
+            if (receiver.customer_id == customerId) {
                 throw new common_1.HttpException({
                     status: false,
                     msg: this.i18n.getMessage(language, 'CANNOT_CHAT_SELF') || 'User cannot chat with itself',
@@ -56,21 +56,16 @@ let ContactService = class ContactService {
                     data: {},
                 }, 400);
             }
-            // ✅ Step 2: Update or Create contact
             let contact = yield this.contactRepo.findOne({
-                where: {
-                    country_code,
-                    phone_number,
-                },
+                where: { customer_id: receiver.customer_id },
             });
             if (contact) {
                 contact.first_name = first_name;
                 contact.last_name = last_name;
-                contact.customer_id = user.customer_id;
             }
             else {
                 contact = this.contactRepo.create({
-                    customer_id: user.customer_id,
+                    customer_id: receiver.customer_id,
                     first_name,
                     last_name,
                     country_code,
@@ -78,12 +73,45 @@ let ContactService = class ContactService {
                 });
             }
             yield this.contactRepo.save(contact);
+            const owner = yield this.userRepo.findOne({
+                where: { customer_id: customerId },
+            });
+            if (!owner) {
+                throw new common_1.HttpException({
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                    code: 400,
+                    data: {},
+                }, 400);
+            }
+            let ownerContact = yield this.contactRepo.findOne({
+                where: { customer_id: owner.customer_id },
+            });
+            if (ownerContact) {
+                ownerContact.first_name = owner.first_name;
+                ownerContact.last_name = owner.last_name;
+            }
+            else {
+                ownerContact = this.contactRepo.create({
+                    customer_id: owner.customer_id,
+                    first_name: owner.first_name,
+                    last_name: owner.last_name,
+                    country_code: owner.country_code,
+                    phone_number: owner.phone_number,
+                });
+            }
+            yield this.contactRepo.save(ownerContact);
             return {
-                first_name,
-                last_name,
-                country_code,
-                phone_number,
-                customer_id: user.customer_id,
+                status: true,
+                code: 200,
+                data: {
+                    first_name: first_name,
+                    last_name: last_name,
+                    country_code: receiver.country_code,
+                    phone_number: receiver.phone_number,
+                    customer_id: receiver.customer_id,
+                },
+                msg: this.i18n.getMessage(language, 'CREATED_SUCCESSFULLY'),
             };
         });
     }

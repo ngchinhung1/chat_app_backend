@@ -23,7 +23,7 @@ import {join} from 'path';
             isGlobal: true,
         }),
         ServeStaticModule.forRoot({
-            serveRoot: '/uploads',                        // URL path
+            serveRoot: 'uploads', // URL path
             rootPath: join(__dirname, '..', 'uploads'),   // filesystem folder
         }),
 

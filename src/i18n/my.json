@@ -17,5 +17,7 @@
   "USER_PROFILE_CREATED_SUCCESSFULLY": "Profil berjaya dicipta",
   "IMAGE_UPLOADED_SUCCESSFULLY": "Gambar berjaya dimuat naik",
   "USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP": "Pengguna ini tidak menggunakan Aplikasi Chat kami. Sila minta mereka memuat turun Aplikasi untuk menggunakan ciri ini.",
-  "CANNOT_CHAT_SELF": "Pengguna tidak boleh berbual dengan dirinya sendiri"
+  "CANNOT_CHAT_SELF": "Pengguna tidak boleh berbual dengan dirinya sendiri",
+  "PROFILE_FETCH_FAILED": "Pengambilan profil gagal",
+  "PROFILE_FETCH_SUCCESS": "Pengambilan profil berjaya"
 }

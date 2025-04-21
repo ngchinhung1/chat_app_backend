@@ -20,11 +20,11 @@ export class ContactService {
     async addContact(ownerId: string, dto: CreateContactDto, language: string) {
         const {country_code, phone_number, first_name, last_name, customerId} = dto;
 
-        const user = await this.userRepo.findOne({
+        const receiver = await this.userRepo.findOne({
             where: {country_code, phone_number},
         });
 
-        if (!user) {
+        if (!receiver) {
             throw new HttpException(
                 {
                     status: false,
@@ -36,7 +36,7 @@ export class ContactService {
             );
         }
 
-        if (user.customer_id == customerId) {
+        if (receiver.customer_id == customerId) {
             throw new HttpException(
                 {
                     status: false,
@@ -48,36 +48,69 @@ export class ContactService {
             );
         }
 
-        // ✅ Step 2: Update or Create contact
         let contact = await this.contactRepo.findOne({
-            where: {
-                country_code,
-                phone_number,
-            },
+            where: {customer_id: receiver.customer_id},
         });
 
         if (contact) {
             contact.first_name = first_name;
             contact.last_name = last_name;
-            contact.customer_id = user.customer_id;
         } else {
             contact = this.contactRepo.create({
-                customer_id: user.customer_id,
+                customer_id: receiver.customer_id,
                 first_name,
                 last_name,
                 country_code,
                 phone_number,
             });
         }
-
         await this.contactRepo.save(contact);
 
+        const owner = await this.userRepo.findOne({
+            where: {customer_id: customerId},
+        });
+
+        if (!owner) {
+            throw new HttpException(
+                {
+                    status: false,
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                    code: 400,
+                    data: {},
+                },
+                400
+            );
+        }
+
+        let ownerContact = await this.contactRepo.findOne({
+            where: {customer_id: owner.customer_id},
+        });
+
+        if (ownerContact) {
+            ownerContact.first_name = owner.first_name;
+            ownerContact.last_name = owner.last_name;
+        } else {
+            ownerContact = this.contactRepo.create({
+                customer_id: owner.customer_id,
+                first_name: owner.first_name,
+                last_name: owner.last_name,
+                country_code: owner.country_code,
+                phone_number: owner.phone_number,
+            });
+        }
+        await this.contactRepo.save(ownerContact);
+
         return {
-            first_name,
-            last_name,
-            country_code,
-            phone_number,
-            customer_id: user.customer_id,
+            status: true,
+            code: 200,
+            data: {
+                first_name: first_name,
+                last_name: last_name,
+                country_code: receiver.country_code,
+                phone_number: receiver.phone_number,
+                customer_id: receiver.customer_id,
+            },
+            msg: this.i18n.getMessage(language, 'CREATED_SUCCESSFULLY'),
         };
     }
 

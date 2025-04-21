@@ -47,7 +47,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
             }),
             serve_static_1.ServeStaticModule.forRoot({
-                serveRoot: '/uploads', // URL path
+                serveRoot: 'uploads', // URL path
                 rootPath: (0, path_1.join)(__dirname, '..', 'uploads'), // filesystem folder
             }),
             jwt_1.JwtModule.registerAsync({

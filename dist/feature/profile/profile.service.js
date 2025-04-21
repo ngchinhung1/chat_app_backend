@@ -162,6 +162,32 @@ let ProfileService = class ProfileService {
             };
         });
     }
+    getProfile(customer_id, language) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const profile = yield this.profileRepo.findOne({
+                where: { customer_id },
+            });
+            if (!profile) {
+                throw new common_1.HttpException({
+                    status: false,
+                    code: 404,
+                    data: {},
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                }, 400);
+            }
+            return {
+                status: true,
+                code: 200,
+                data: {
+                    customer_id: profile.customer_id,
+                    first_name: profile.first_name || '',
+                    last_name: profile.last_name || '',
+                    profile_image: profile.profile_image || null,
+                },
+                msg: this.i18n.getMessage(language, 'PROFILE_FETCH_SUCCESS'),
+            };
+        });
+    }
 };
 exports.ProfileService = ProfileService;
 exports.ProfileService = ProfileService = __decorate([

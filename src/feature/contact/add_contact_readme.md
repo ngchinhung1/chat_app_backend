@@ -1,11 +1,10 @@
-
-# 🧑‍💻 Developer Onboarding Guide: Add Contact + Chat (REST + WebSocket)
+# 🧑‍💻 Developer Onboarding Guide: Add Contact + Conversation Creation (REST + WebSocket)
 
 ## ⚙️ Overview
 
-This project uses a **hybrid approach**:
-- `REST API` for data operations (contact creation, chat generation)
-- `WebSocket` for real-time events (room joining, messaging)
+This service follows a **hybrid approach**:
+- **REST API** for contact creation
+- **WebSocket** for real-time conversation setup
 
 ---
 
@@ -20,11 +19,14 @@ Client (App)
    |       - phone_number
    |       - country_code
    |
-   |<-- [2] Response: contact + chatId
+   |<-- [2] Response: contact data
    |
-   |-- [3] Emit "join_room" via WebSocket
-           - chatId
-           - type: 'private' | 'group'
+   |-- [3] Emit "create_conversation" via WebSocket
+   |       - toCountryCode
+   |       - toPhoneNumber
+   |       - conversationType: 'private' | 'group'
+   |
+   |<-- [4] ACK: conversationId
 ```
 
 ---
@@ -63,16 +65,17 @@ Content-Type: application/json
     "last_name": "Bin Abu",
     "phone_number": "123456789",
     "country_code": "60",
-    "customer_id": "100001",
-    "chatId": "chat_uuid"
+    "customer_id": "100001"
   },
   "msg": "Contact added successfully"
 }
 ```
 
+> Once you receive a successful response, use the returned contact info to initiate a conversation.
+
 ---
 
-## 📡 WebSocket: Join Room
+## 📡 WebSocket: Create Conversation
 
 ### **Connect**
 ```ts
@@ -83,42 +86,44 @@ const socket = io("http://localhost:3000", {
 });
 ```
 
-### **Emit `join_room`**
+### **Emit `create_conversation`**
+```ts
+socket.emitWithAck(
+  'create_conversation',
+  {
+    toCountryCode: countryCode,
+    toPhoneNumber: phoneNumber,
+    conversationType: conversationType, // 'private' or 'group'
+  },
+  (ack) => {
+    if (ack && ack.status === true) {
+      const conversationId = ack.conversationId;
+      // Proceed with conversationId
+    } else {
+      // Handle error
+    }
+  }
+);
+```
+
+### **ACK Response**
 ```json
 {
-  "event": "join_room",
-  "data": {
-    "chatId": "chat_uuid",
-    "type": "private"
-  }
+  "status": true,
+  "conversationId": "chat_uuid",
+  "msg": "Conversation created successfully"
 }
 ```
 
-### **Server Response**
-```json
-{
-  "event": "joined_room",
-  "data": {
-    "chatId": "chat_uuid",
-    "type": "private",
-    "message": "Successfully joined private chat room."
-  }
-}
-```
+> Frontend should await this ACK to obtain the `conversationId` before navigating into the chat screen.
 
 ---
 
-## 🧠 Notes
+## 📝 Notes
 
-- `chatId` is dynamically generated or reused from the `ChatListEntity`.
-- `join_room` logic prevents re-joining the same chat.
-- `type` should be `private` or `group` (to handle future group chat logic).
-- If contact is not a registered user, `chatId` will be `null`.
+- `conversationId` is created based on existing or new Chat records.
+- Server logic ensures no duplicate conversations for the same participant pair.
+- `conversationType` supports future group chat flows.
+- If the contact is not yet registered in the system, you may receive `status: false` with an appropriate message.
 
 ---
-
-## 📝 Future Enhancements
-
-- [ ] Emit `user_joined` to group members
-- [ ] Add `add_contact` socket support (optional)
-- [ ] Display list of recent chats after `join_room`

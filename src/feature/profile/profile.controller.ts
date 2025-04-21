@@ -75,4 +75,28 @@ export class ProfileController {
             };
         }
     }
+
+    @Post('get-profile')
+    @UseGuards(JwtAuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async getProfile(@Req() req: any) {
+        const customer_id = req.user.customer_id;
+        const language = (req.headers['language'] as string) || 'en';
+
+        try {
+            return await this.profileService.getProfile(
+                customer_id,
+                language,
+            );
+        } catch (error: any) {
+            return {
+                status: false,
+                code: 400,
+                data: null,
+                msg:
+                    (error.response?.msg as string) ||
+                    this.i18n.getMessage(language, 'PROFILE_FETCH_FAILED'),
+            };
+        }
+    }
 }

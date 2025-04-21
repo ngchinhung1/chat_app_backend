@@ -38,19 +38,14 @@ let ContactController = class ContactController {
             const ownerId = req.user.customer_id;
             const language = req.headers['language'] || 'en';
             try {
-                const result = yield this.contactService.addContact(ownerId, dto, req.language);
-                return {
-                    status: true,
-                    code: 200,
-                    data: result,
-                    msg: 'SUCCESS',
-                };
+                return yield this.contactService.addContact(ownerId, dto, language);
             }
             catch (error) {
                 return {
                     status: false,
                     code: 400,
-                    msg: ((_a = error.response) === null || _a === void 0 ? void 0 : _a.msg) || this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
+                    msg: ((_a = error.response) === null || _a === void 0 ? void 0 : _a.msg) ||
+                        this.i18n.getMessage(language, 'USER_NOT_FOUND_CALL_FOR_DOWNLOAD_APP'),
                     data: null,
                 };
             }
@@ -72,6 +67,7 @@ exports.ContactController = ContactController;
 __decorate([
     (0, common_1.Post)('/add'),
     (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),

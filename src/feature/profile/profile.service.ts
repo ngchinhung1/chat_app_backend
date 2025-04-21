@@ -168,4 +168,42 @@ export class ProfileService {
             msg: this.i18n.getMessage(language, 'USER_PROFILE_UPDATED_SUCCESSFULLY'),
         };
     }
+
+    async getProfile(
+        customer_id: string,
+        language: string | undefined,
+    ): Promise<BaseResponse<{
+        customer_id: string;
+        first_name: string;
+        last_name: string;
+        profile_image: string | null;
+    }>> {
+        const profile = await this.profileRepo.findOne({
+            where: {customer_id},
+        });
+
+        if (!profile) {
+            throw new HttpException(
+                {
+                    status: false,
+                    code: 404,
+                    data: {},
+                    msg: this.i18n.getMessage(language, 'USER_NOT_FOUND'),
+                },
+                400,
+            );
+        }
+
+        return {
+            status: true,
+            code: 200,
+            data: {
+                customer_id: profile.customer_id,
+                first_name: profile.first_name || '',
+                last_name: profile.last_name || '',
+                profile_image: profile.profile_image || null,
+            },
+            msg: this.i18n.getMessage(language, 'PROFILE_FETCH_SUCCESS'),
+        };
+    }
 }

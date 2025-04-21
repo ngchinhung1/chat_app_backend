@@ -76,6 +76,25 @@ let ProfileController = class ProfileController {
             }
         });
     }
+    getProfile(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const customer_id = req.user.customer_id;
+            const language = req.headers['language'] || 'en';
+            try {
+                return yield this.profileService.getProfile(customer_id, language);
+            }
+            catch (error) {
+                return {
+                    status: false,
+                    code: 400,
+                    data: null,
+                    msg: ((_a = error.response) === null || _a === void 0 ? void 0 : _a.msg) ||
+                        this.i18n.getMessage(language, 'PROFILE_FETCH_FAILED'),
+                };
+            }
+        });
+    }
 };
 exports.ProfileController = ProfileController;
 __decorate([
@@ -108,6 +127,15 @@ __decorate([
     __metadata("design:paramtypes", [editProfile_dto_1.EditProfileDto, Object, Object]),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "editProfile", null);
+__decorate([
+    (0, common_1.Post)('get-profile'),
+    (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProfileController.prototype, "getProfile", null);
 exports.ProfileController = ProfileController = __decorate([
     (0, common_1.Controller)('profile'),
     __metadata("design:paramtypes", [profile_service_1.ProfileService,
