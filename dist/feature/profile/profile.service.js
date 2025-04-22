@@ -162,10 +162,10 @@ let ProfileService = class ProfileService {
             };
         });
     }
-    getProfile(customer_id, language) {
+    getProfile(dto, language) {
         return __awaiter(this, void 0, void 0, function* () {
             const profile = yield this.profileRepo.findOne({
-                where: { customer_id },
+                where: { customer_id: dto.customer_id },
             });
             if (!profile) {
                 throw new common_1.HttpException({

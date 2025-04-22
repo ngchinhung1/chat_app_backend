@@ -8,6 +8,7 @@ import {I18nService} from "../../i18n/ i18n.service";
 import {UploadedFile} from '../../shared/entities/uploaded_files.entity';
 import {UserEntity} from "../auth/entities/user.entity";
 import {StorageService} from "../../shared/storage/storage.service";
+import {GetProfileDto} from "./dto/getProfile.dto";
 
 @Injectable()
 export class ProfileService {
@@ -170,7 +171,7 @@ export class ProfileService {
     }
 
     async getProfile(
-        customer_id: string,
+        dto: GetProfileDto,
         language: string | undefined,
     ): Promise<BaseResponse<{
         customer_id: string;
@@ -179,7 +180,7 @@ export class ProfileService {
         profile_image: string | null;
     }>> {
         const profile = await this.profileRepo.findOne({
-            where: {customer_id},
+            where: {customer_id: dto.customer_id},
         });
 
         if (!profile) {

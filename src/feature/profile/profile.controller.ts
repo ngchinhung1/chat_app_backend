@@ -16,6 +16,7 @@ import {Request} from 'express';
 import {FileInterceptor} from "@nestjs/platform-express";
 import {I18nService} from "../../i18n/ i18n.service";
 import {EditProfileDto} from "./dto/editProfile.dto";
+import {GetProfileDto} from "./dto/getProfile.dto";
 
 @Controller('profile')
 export class ProfileController {
@@ -57,7 +58,6 @@ export class ProfileController {
     ) {
         const ownerId = req.user.customer_id;
         const language = (req.headers['language'] as string) || 'en';
-        dto.customer_id = ownerId;
 
         try {
             if (file) {
@@ -79,13 +79,14 @@ export class ProfileController {
     @Post('get-profile')
     @UseGuards(JwtAuthGuard)
     @HttpCode(HttpStatus.OK)
-    async getProfile(@Req() req: any) {
-        const customer_id = req.user.customer_id;
+    async getProfile(
+        @Body() dto: GetProfileDto,
+        @Req() req: any) {
         const language = (req.headers['language'] as string) || 'en';
 
         try {
             return await this.profileService.getProfile(
-                customer_id,
+                dto,
                 language,
             );
         } catch (error: any) {

@@ -13,7 +13,7 @@ type Messages = {
 export class I18nService {
     private readonly messages: Messages = {
         en,
-        my,
+        ms: my,
         zh,
     };
 

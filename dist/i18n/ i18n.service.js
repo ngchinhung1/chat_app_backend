@@ -18,7 +18,7 @@ let I18nService = class I18nService {
     constructor() {
         this.messages = {
             en: en_json_1.default,
-            my: my_json_1.default,
+            ms: my_json_1.default,
             zh: zh_json_1.default,
         };
     }

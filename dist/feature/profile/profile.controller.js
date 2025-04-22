@@ -29,6 +29,7 @@ const jwtAuth_guard_1 = require("../../config/guards/jwtAuth.guard");
 const platform_express_1 = require("@nestjs/platform-express");
 const _i18n_service_1 = require("../../i18n/ i18n.service");
 const editProfile_dto_1 = require("./dto/editProfile.dto");
+const getProfile_dto_1 = require("./dto/getProfile.dto");
 let ProfileController = class ProfileController {
     constructor(profileService, i18n) {
         this.profileService = profileService;
@@ -58,7 +59,6 @@ let ProfileController = class ProfileController {
             var _a;
             const ownerId = req.user.customer_id;
             const language = req.headers['language'] || 'en';
-            dto.customer_id = ownerId;
             try {
                 if (file) {
                     dto.profile_image = yield this.profileService.uploadProfileImage(file);
@@ -76,13 +76,12 @@ let ProfileController = class ProfileController {
             }
         });
     }
-    getProfile(req) {
+    getProfile(dto, req) {
         return __awaiter(this, void 0, void 0, function* () {
             var _a;
-            const customer_id = req.user.customer_id;
             const language = req.headers['language'] || 'en';
             try {
-                return yield this.profileService.getProfile(customer_id, language);
+                return yield this.profileService.getProfile(dto, language);
             }
             catch (error) {
                 return {
@@ -131,9 +130,10 @@ __decorate([
     (0, common_1.Post)('get-profile'),
     (0, common_1.UseGuards)(jwtAuth_guard_1.JwtAuthGuard),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Req)()),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [getProfile_dto_1.GetProfileDto, Object]),
     __metadata("design:returntype", Promise)
 ], ProfileController.prototype, "getProfile", null);
 exports.ProfileController = ProfileController = __decorate([
