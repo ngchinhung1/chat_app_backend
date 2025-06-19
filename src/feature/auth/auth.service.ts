@@ -140,7 +140,7 @@ export class AuthService {
 
         // ✅ 5. Generate JWT token
         const token = this.jwtService.sign({
-            sub: user.customer_id,
+            customer_id: user.customer_id,
             phone: user.phone_number,
         }, {
             secret: process.env.JWT_SECRET,

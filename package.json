@@ -7,7 +7,8 @@
         "start": "node dist/main",
         "start:dev": "nest start --watch",
         "build": "nest build",
-        "lint": "eslint . --ext .ts"
+        "lint": "eslint . --ext .ts",
+        "typeorm": "typeorm"
     },
     "author": "Your Name",
     "license": "ISC",
